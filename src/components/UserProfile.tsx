@@ -2,6 +2,7 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useState } from 'react'
+import Button from './Button'
 
 export default function UserProfile() {
   const { data: session } = useSession()
@@ -18,72 +19,57 @@ export default function UserProfile() {
 
   if (!session) {
     return (
-      <button
+      <Button
         onClick={() => signIn('keycloak', { callbackUrl: window.location.href })}
-        className="px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700 transition text-white"
+        variant="primary"
       >
         Login
-      </button>
+      </Button>
     )
   }
 
   return (
-    <div className="flex items-center space-x-4">
-      <div className="relative">
-        <button
-          onClick={() => setShowDetails(!showDetails)}
-          className="px-4 py-2 bg-gray-700 rounded-md hover:bg-gray-600 transition text-white"
-        >
-          {session.user?.email || session.user?.name || 'User'}
-        </button>
+    <div className="relative">
+      <Button
+        onClick={() => setShowDetails(!showDetails)}
+        variant="secondary"
+      >
+        {session.user?.email || session.user?.name || 'User'}
+      </Button>
 
-        {showDetails && (
-          <div className="absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg z-50 border border-gray-200">
-            <div className="p-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-3">Profile Information</h3>
+      {showDetails && (
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+          <div className="p-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">Profile Information</h3>
 
-              <div className="space-y-2 text-sm">
-                {session.user?.name && (
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-gray-600">Name:</span>
-                    <span className="text-gray-800">{session.user.name}</span>
-                  </div>
-                )}
+            <div className="space-y-2 text-sm">
+              {session.user?.name && (
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-600">Name:</span>
+                  <span className="text-gray-800">{session.user.name}</span>
+                </div>
+              )}
 
-                {session.user?.email && (
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-gray-600">Email:</span>
-                    <span className="text-gray-800">{session.user.email}</span>
-                  </div>
-                )}
+              {session.user?.email && (
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-600">Email:</span>
+                  <span className="text-gray-800">{session.user.email}</span>
+                </div>
+              )}
+            </div>
 
-                {session.user?.image && (
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-gray-600">Avatar:</span>
-                    <img src={session.user.image} alt="Profile" className="w-16 h-16 rounded-full mt-1" />
-                  </div>
-                )}
-
-                {session.accessToken && (
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-gray-600">Access Token:</span>
-                    <span className="text-gray-800 text-xs break-all font-mono bg-gray-100 p-2 rounded">
-                      {session.accessToken.substring(0, 50)}...
-                    </span>
-                  </div>
-                )}
-              </div>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <Button
+                onClick={handleLogout}
+                variant="danger"
+                className="w-full"
+              >
+                Logout
+              </Button>
             </div>
           </div>
-        )}
-      </div>
-
-      <button
-        onClick={handleLogout}
-        className="px-4 py-2 bg-red-600 rounded-md hover:bg-red-700 transition text-white"
-      >
-        Logout
-      </button>
+        </div>
+      )}
     </div>
   )
 }

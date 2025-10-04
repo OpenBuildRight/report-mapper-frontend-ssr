@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useState } from 'react'
+import '@app/globals.css'
 
 export default function ReportObservation() {
   const { data: session, status } = useSession()
