@@ -3,6 +3,7 @@
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useState } from 'react'
 import Button from './Button'
+import {LoginIcon} from "@/components/icons/LoginIcon";
 
 export default function UserProfile() {
   const { data: session } = useSession()
@@ -22,8 +23,9 @@ export default function UserProfile() {
       <Button
         onClick={() => signIn('keycloak', { callbackUrl: window.location.href })}
         variant="primary"
+        className="flex items-center gap-2"
       >
-        Login
+          <LoginIcon/> Login
       </Button>
     )
   }
@@ -34,7 +36,7 @@ export default function UserProfile() {
         onClick={() => setShowDetails(!showDetails)}
         variant="secondary"
       >
-        {session.user?.email || session.user?.name || 'User'}
+        {session.user?.name || 'User'}
       </Button>
 
       {showDetails && (
