@@ -29,7 +29,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-leaflet": "^5.0.0",
-    "react-leaflet-cluster": "^3.1.1"
+    "react-leaflet-cluster": "^3.1.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
@@ -39,6 +40,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/uuid": "^11.0.0",
     "storybook": "^9.1.10",
     "tailwindcss": "^4",
     "typescript": "^5"
