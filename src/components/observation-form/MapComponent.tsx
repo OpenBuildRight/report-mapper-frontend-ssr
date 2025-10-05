@@ -1,12 +1,14 @@
 'use client'
 
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
-import MarkerClusterGroup from 'react-leaflet-cluster'
+import MarkerClusterGroup from '../map/MarkerClusterGroup'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { PhotoWithMetadata } from '@/types/observation'
 import ClusterMarker from '../icons/ClusterMarker'
+import MapMarkerWithLabel from '../icons/MapMarkerWithLabel'
+import { getPhotoLabel } from '@/lib/photoLabels'
 
 // Fix for default marker icons in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -24,15 +26,6 @@ const observationIcon = new L.Icon({
   iconAnchor: [17, 57],
   popupAnchor: [1, -50],
   shadowSize: [57, 57]
-})
-
-const photoIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
 })
 
 interface MapComponentProps {
@@ -110,12 +103,25 @@ export default function MapComponent({
   }
 
   return (
-    <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-600">
-      <MapContainer
-        center={[center.latitude, center.longitude]}
-        zoom={13}
-        className="h-full w-full"
-      >
+    <div className="relative">
+      {editingPhotoId && (
+        <div className="absolute top-0 left-0 right-0 z-[1000] bg-yellow-900 border-2 border-yellow-600 rounded-t-lg p-3 text-center">
+          <div className="flex items-center justify-center gap-2">
+            <svg className="w-5 h-5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="font-medium text-yellow-200">
+              Click anywhere on the map to set the new location for Photo {photos.find(p => p.id === editingPhotoId) && getPhotoLabel(photos.indexOf(photos.find(p => p.id === editingPhotoId)!))}
+            </span>
+          </div>
+        </div>
+      )}
+      <div className={`h-96 w-full rounded-lg overflow-hidden border border-gray-600 ${editingPhotoId ? 'rounded-t-none' : ''}`}>
+        <MapContainer
+          center={[center.latitude, center.longitude]}
+          zoom={13}
+          className="h-full w-full"
+        >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -130,15 +136,50 @@ export default function MapComponent({
         <MarkerClusterGroup
           chunkedLoading
           iconCreateFunction={createClusterCustomIcon}
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom={true}
+          maxClusterRadius={120}
         >
-          {photosWithLocation.map((photo) => (
+          {photosWithLocation.map((photo) => {
+            const label = getPhotoLabel(photos.indexOf(photo))
+
+            // Create custom labeled icon for this photo
+            const labeledIconHtml = renderToStaticMarkup(
+              <MapMarkerWithLabel
+                label={label}
+                size={40}
+                color="#3b82f6"
+                labelColor="#000000"
+                labelBgColor="#ffffff"
+              />
+            )
+
+            const labeledIcon = L.divIcon({
+              html: labeledIconHtml,
+              className: 'custom-photo-marker',
+              iconSize: L.point(40, 40, true),
+              iconAnchor: L.point(20, 40),
+              popupAnchor: L.point(0, -40),
+            })
+
+            return (
           <Marker
             key={photo.id}
             position={[photo.location!.latitude, photo.location!.longitude]}
-            icon={photoIcon}
+            icon={labeledIcon}
+            eventHandlers={{
+              add: (e) => {
+                // Store photoId on the marker when it's added to the map
+                e.target.options.photoId = photo.id
+              }
+            }}
           >
             <Popup maxWidth={250}>
               <div className="p-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg font-bold text-blue-600">{label}</span>
+                  <span className="text-xs text-gray-500">Photo {label}</span>
+                </div>
                 <img
                   src={photo.preview}
                   alt="Photo preview"
@@ -180,7 +221,8 @@ export default function MapComponent({
               </div>
             </Popup>
           </Marker>
-        ))}
+            )
+          })}
         </MarkerClusterGroup>
 
         {/* Observation location marker (not clustered) */}
@@ -205,6 +247,7 @@ export default function MapComponent({
           </Marker>
         )}
       </MapContainer>
+      </div>
     </div>
   )
 }

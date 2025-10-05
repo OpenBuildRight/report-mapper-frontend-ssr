@@ -4,6 +4,7 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { PhotoWithMetadata } from '@/types/observation'
 import { extractGPSFromImage } from '@/lib/exif'
+import { getPhotoLabel } from '@/lib/photoLabels'
 import PhotoCard from './PhotoCard'
 
 const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false })
@@ -96,11 +97,6 @@ export default function PhotoUploadStep({ photos, onPhotosChange }: PhotoUploadS
           {photosWithLocation.length > 0 && (
             <div className="mb-6">
               <h4 className="text-md font-medium text-gray-300 mb-3">Photo Locations</h4>
-              {editingPhotoId && (
-                <div className="mb-2 bg-yellow-900 border border-yellow-700 rounded p-2 text-sm text-yellow-200">
-                  Click on the map to set a new location for the selected photo
-                </div>
-              )}
               <MapComponent
                 center={defaultCenter}
                 photos={photos}
@@ -113,10 +109,11 @@ export default function PhotoUploadStep({ photos, onPhotosChange }: PhotoUploadS
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {photos.map((photo) => (
+            {photos.map((photo, index) => (
               <PhotoCard
                 key={photo.id}
                 photo={photo}
+                label={getPhotoLabel(index)}
                 onRemove={handleRemovePhoto}
                 onUpdateDescription={handleUpdateDescription}
               />

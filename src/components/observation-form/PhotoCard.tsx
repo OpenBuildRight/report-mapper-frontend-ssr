@@ -5,11 +5,12 @@ import Button from '../Button'
 
 interface PhotoCardProps {
   photo: PhotoWithMetadata
+  label: string
   onRemove: (photoId: string) => void
   onUpdateDescription: (photoId: string, description: string) => void
 }
 
-export default function PhotoCard({ photo, onRemove, onUpdateDescription }: PhotoCardProps) {
+export default function PhotoCard({ photo, label, onRemove, onUpdateDescription }: PhotoCardProps) {
   return (
     <div className="border border-gray-700 rounded-lg overflow-hidden bg-gray-900">
       <div className="relative aspect-video bg-gray-800">
@@ -18,6 +19,9 @@ export default function PhotoCard({ photo, onRemove, onUpdateDescription }: Phot
           alt="Preview"
           className="w-full h-full object-cover"
         />
+        <div className="absolute top-2 left-2 bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-lg">
+          {label}
+        </div>
         <button
           onClick={() => onRemove(photo.id)}
           className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-2 hover:bg-red-700 transition"

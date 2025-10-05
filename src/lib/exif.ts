@@ -13,8 +13,10 @@ export async function extractGPSFromImage(file: File): Promise<GPSCoordinates | 
     // Get the decimal values (ExifReader's description already converts DMS to decimal)
     const latitudeValue = tags.GPSLatitude?.description
     const longitudeValue = tags.GPSLongitude?.description
-    const latitudeRef = tags.GPSLatitudeRef?.value?.[0]
-    const longitudeRef = tags.GPSLongitudeRef?.value?.[0]
+    const latitudeRefValue = tags.GPSLatitudeRef?.value
+    const longitudeRefValue = tags.GPSLongitudeRef?.value
+    const latitudeRef = Array.isArray(latitudeRefValue) ? latitudeRefValue[0] : latitudeRefValue
+    const longitudeRef = Array.isArray(longitudeRefValue) ? longitudeRefValue[0] : longitudeRefValue
 
     if (latitudeValue && longitudeValue) {
       let latitude = parseFloat(latitudeValue)
