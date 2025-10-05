@@ -9,3 +9,37 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: kc_admin_password
     ports:
       - "9003:8080"
+    networks:
+      - report-mapper-network
+
+  mongodb:
+    image: mongo:7
+    container_name: report-mapper-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: reportmapper
+      MONGO_INITDB_ROOT_PASSWORD: reportmapper_dev_password
+      MONGO_INITDB_DATABASE: reportmapper
+    networks:
+      - report-mapper-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: report-mapper-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: reportmapper
+      ME_CONFIG_MONGODB_ADMINPASSWORD: reportmapper_dev_password
+      ME_CONFIG_MONGODB_URL: mongodb://reportmapper:reportmapper_dev_password@mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      - mongodb
+    networks:
+      - report-mapper-network
+networks:
+  report-mapper-network:
+    driver: bridge

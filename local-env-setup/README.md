@@ -69,6 +69,13 @@ Then update with the actual values from Terraform outputs.
 - **Client ID**: `test-client`
 - **Client Secret**: `local-dev-secret-change-in-production`
 
+### MongoDB
+- **URL**: http://localhost:27017
+- **Database**: `reportmapper`
+- **Admin User**: `reportmapper`
+- **Admin Password**: `reportmapper_dev_password`
+- **Mongo Express UI**: http://localhost:8081
+
 ### Test User
 - **Username**: `alice`
 - **Password**: `alice_password`

@@ -60,6 +60,9 @@ KEYCLOAK_CLIENT_SECRET=$KEYCLOAK_CLIENT_SECRET
 
 # Backend API Configuration
 BACKEND_API_URL=http://localhost:8080
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://reportmapper:reportmapper_dev_password@localhost:27017/reportmapper?authSource=admin
 EOF
 
 echo ""
@@ -71,6 +74,11 @@ echo "   Keycloak Admin: kc_admin_user / kc_admin_password"
 echo "   Realm: my-realm"
 echo "   Client ID: $KEYCLOAK_CLIENT_ID"
 echo "   Test User: alice / alice_password"
+echo ""
+echo "   MongoDB URL: http://localhost:27017"
+echo "   MongoDB Database: reportmapper"
+echo "   MongoDB Admin: reportmapper / reportmapper_dev_password"
+echo "   Mongo Express UI: http://localhost:8081"
 echo ""
 echo "🎯 Next steps:"
 echo "   1. cd .."

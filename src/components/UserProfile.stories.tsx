@@ -41,6 +41,7 @@ export const LoggedIn: Story = {
       <SessionProvider
         session={{
           user: {
+            id: '12345',
             name: 'John Doe',
             email: 'john.doe@example.com',
             image: 'https://i.pravatar.cc/150?img=12',
