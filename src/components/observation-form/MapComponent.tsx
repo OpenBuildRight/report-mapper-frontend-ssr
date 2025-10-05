@@ -244,7 +244,7 @@ export default function MapComponent({
                       Use as Observation Location
                     </button>
                   )}
-                  {onPhotoLocationChange && onStartEditingPhoto && (
+                  {onPhotoLocationChange && onStartEditingPhoto && !onSetObservationLocation && (
                     <button
                       onClick={() => onStartEditingPhoto(photo.id)}
                       className="text-xs bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition"
@@ -252,7 +252,7 @@ export default function MapComponent({
                       {editingPhotoId === photo.id ? 'Editing...' : 'Edit Location'}
                     </button>
                   )}
-                  {onPhotoDelete && (
+                  {onPhotoDelete && !onSetObservationLocation && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation()

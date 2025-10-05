@@ -22,8 +22,6 @@ export default function LocationStep({
   onPhotoLocationChange
 }: LocationStepProps) {
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
-  const [manualLatitude, setManualLatitude] = useState('')
-  const [manualLongitude, setManualLongitude] = useState('')
   const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -36,10 +34,12 @@ export default function LocationStep({
   const autoPopulateLocation = async () => {
     setIsLoadingLocation(true)
 
-    // First, try to get location from first photo with GPS data
-    const photoWithLocation = photos.find(p => p.location)
-    if (photoWithLocation?.location) {
-      onLocationChange(photoWithLocation.location)
+    // Calculate centroid of all photos with GPS data
+    const photosWithLocation = photos.filter(p => p.location)
+    if (photosWithLocation.length > 0) {
+      const avgLat = photosWithLocation.reduce((sum, p) => sum + p.location!.latitude, 0) / photosWithLocation.length
+      const avgLng = photosWithLocation.reduce((sum, p) => sum + p.location!.longitude, 0) / photosWithLocation.length
+      onLocationChange({ latitude: avgLat, longitude: avgLng })
       setIsLoadingLocation(false)
       return
     }
@@ -51,19 +51,6 @@ export default function LocationStep({
     }
 
     setIsLoadingLocation(false)
-  }
-
-  const handleManualLocationSubmit = () => {
-    const lat = parseFloat(manualLatitude)
-    const lng = parseFloat(manualLongitude)
-
-    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-      onLocationChange({ latitude: lat, longitude: lng })
-      setManualLatitude('')
-      setManualLongitude('')
-    } else {
-      alert('Please enter valid coordinates (Latitude: -90 to 90, Longitude: -180 to 180)')
-    }
   }
 
   const handleMapClick = (lat: number, lng: number) => {
@@ -94,7 +81,7 @@ export default function LocationStep({
     <div>
       <h2 className="text-2xl font-semibold mb-4 text-gray-100">Set Observation Location</h2>
       <p className="text-gray-400 mb-6">
-        The location has been auto-populated from your photos or device. You can override it by clicking on the map or entering coordinates manually.
+        The location has been set to the center point of your photos. Click on the map or a photo marker to adjust it.
       </p>
 
       {isLoadingLocation && (
@@ -115,13 +102,13 @@ export default function LocationStep({
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                 </svg>
-                Click on the map to change the observation location
+                Click anywhere on the map to adjust the observation location
               </p>
               <p className="text-xs text-blue-300 flex items-center gap-1">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                Click "Use as Observation Location" on a photo marker to use its location
+                Click a photo marker to use that photo's location
               </p>
             </div>
           </div>
@@ -139,45 +126,6 @@ export default function LocationStep({
           />
         </div>
       )}
-
-      <div className="mt-6">
-        <h3 className="text-lg font-medium mb-3 text-gray-200">Override Location Manually</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Latitude
-            </label>
-            <input
-              type="number"
-              step="any"
-              value={manualLatitude}
-              onChange={(e) => setManualLatitude(e.target.value)}
-              placeholder="-90 to 90"
-              className="w-full border border-gray-600 bg-gray-800 text-gray-100 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Longitude
-            </label>
-            <input
-              type="number"
-              step="any"
-              value={manualLongitude}
-              onChange={(e) => setManualLongitude(e.target.value)}
-              placeholder="-180 to 180"
-              className="w-full border border-gray-600 bg-gray-800 text-gray-100 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
-            />
-          </div>
-        </div>
-        <Button
-          variant="secondary"
-          onClick={handleManualLocationSubmit}
-          className="mt-3"
-        >
-          Set Manual Location
-        </Button>
-      </div>
 
       <div className="mt-6">
         <Button
