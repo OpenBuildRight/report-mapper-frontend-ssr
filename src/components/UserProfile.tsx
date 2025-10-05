@@ -6,8 +6,12 @@ import Button from './Button'
 import {LoginIcon} from "@/components/icons/LoginIcon";
 
 export default function UserProfile() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [showDetails, setShowDetails] = useState(false)
+
+  if (status === 'loading') {
+    return <Button variant="secondary" disabled>Loading...</Button>
+  }
 
   const handleLogout = async () => {
     // Clear all local storage and session storage

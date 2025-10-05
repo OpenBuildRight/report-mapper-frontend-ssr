@@ -14,7 +14,7 @@ export const LoginIcon : React.FC<LoginIconProps> = (
 ) => {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`} fill="none" stroke={stroke}
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
              className="lucide lucide-log-in-icon lucide-log-in">
             <path d="m10 17 5-5-5-5"/>
             <path d="M15 12H3"/>
