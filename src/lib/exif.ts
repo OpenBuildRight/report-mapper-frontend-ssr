@@ -10,13 +10,31 @@ export async function extractGPSFromImage(file: File): Promise<GPSCoordinates | 
     const arrayBuffer = await file.arrayBuffer()
     const tags = await ExifReader.load(arrayBuffer)
 
-    const latitude = tags.GPSLatitude?.description
-    const longitude = tags.GPSLongitude?.description
+    // Get the decimal values (ExifReader's description already converts DMS to decimal)
+    const latitudeValue = tags.GPSLatitude?.description
+    const longitudeValue = tags.GPSLongitude?.description
+    const latitudeRef = tags.GPSLatitudeRef?.value?.[0]
+    const longitudeRef = tags.GPSLongitudeRef?.value?.[0]
 
-    if (latitude && longitude) {
+    if (latitudeValue && longitudeValue) {
+      let latitude = parseFloat(latitudeValue)
+      let longitude = parseFloat(longitudeValue)
+
+      // Apply directional signs
+      // South latitudes should be negative
+      if (latitudeRef === 'S' && latitude > 0) {
+        latitude = -latitude
+      }
+      // West longitudes should be negative
+      if (longitudeRef === 'W' && longitude > 0) {
+        longitude = -longitude
+      }
+
+      console.log('Extracted GPS:', { latitude, longitude, latitudeRef, longitudeRef })
+
       return {
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude)
+        latitude,
+        longitude
       }
     }
 
