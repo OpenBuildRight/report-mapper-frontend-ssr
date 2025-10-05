@@ -44,27 +44,27 @@ export default function UserProfile() {
       </Button>
 
       {showDetails && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-lg z-50 border border-gray-700">
           <div className="p-4">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">Profile Information</h3>
+            <h3 className="text-lg font-bold text-gray-100 mb-3">Profile Information</h3>
 
             <div className="space-y-2 text-sm">
               {session.user?.name && (
                 <div className="flex flex-col">
-                  <span className="font-semibold text-gray-600">Name:</span>
-                  <span className="text-gray-800">{session.user.name}</span>
+                  <span className="font-semibold text-gray-400">Name:</span>
+                  <span className="text-gray-200">{session.user.name}</span>
                 </div>
               )}
 
               {session.user?.email && (
                 <div className="flex flex-col">
-                  <span className="font-semibold text-gray-600">Email:</span>
-                  <span className="text-gray-800">{session.user.email}</span>
+                  <span className="font-semibold text-gray-400">Email:</span>
+                  <span className="text-gray-200">{session.user.email}</span>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-gray-700">
               <Button
                 onClick={handleLogout}
                 variant="danger"

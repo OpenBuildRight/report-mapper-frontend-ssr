@@ -9,7 +9,7 @@ export default function ReportObservation() {
   if (status === 'loading') {
     return (
       <div className="container mx-auto px-4 py-8">
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-400">Loading...</p>
       </div>
     )
   }
@@ -17,9 +17,9 @@ export default function ReportObservation() {
   if (status === 'unauthenticated') {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
-          <p className="text-gray-700">Please sign in to report observations.</p>
+        <div className="bg-yellow-900 border border-yellow-700 rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-2 text-yellow-200">Authentication Required</h2>
+          <p className="text-yellow-300">Please sign in to report observations.</p>
         </div>
       </div>
     )
@@ -27,7 +27,7 @@ export default function ReportObservation() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-4xl font-bold mb-8">Report Observation</h1>
+      <h1 className="text-4xl font-bold mb-8 text-gray-100">Report Observation</h1>
       <ObservationForm />
     </div>
   )

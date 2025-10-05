@@ -75,22 +75,22 @@ export default function LocationStep({
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4">Set Observation Location</h2>
-      <p className="text-gray-600 mb-6">
+      <h2 className="text-2xl font-semibold mb-4 text-gray-100">Set Observation Location</h2>
+      <p className="text-gray-400 mb-6">
         The location has been auto-populated from your photos or device. You can override it by clicking on the map or entering coordinates manually.
       </p>
 
       {isLoadingLocation && (
         <div className="text-center py-4">
-          <p className="text-gray-600">Loading location...</p>
+          <p className="text-gray-400">Loading location...</p>
         </div>
       )}
 
       {location && (
         <div className="mb-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <p className="text-sm font-medium text-blue-900">Current observation location:</p>
-            <p className="text-lg font-semibold text-blue-700">
+          <div className="bg-blue-900 border border-blue-700 rounded-lg p-4 mb-4">
+            <p className="text-sm font-medium text-blue-300">Current observation location:</p>
+            <p className="text-lg font-semibold text-blue-200">
               {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
             </p>
           </div>
@@ -107,10 +107,10 @@ export default function LocationStep({
       )}
 
       <div className="mt-6">
-        <h3 className="text-lg font-medium mb-3">Override Location Manually</h3>
+        <h3 className="text-lg font-medium mb-3 text-gray-200">Override Location Manually</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Latitude
             </label>
             <input
@@ -119,11 +119,11 @@ export default function LocationStep({
               value={manualLatitude}
               onChange={(e) => setManualLatitude(e.target.value)}
               placeholder="-90 to 90"
-              className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-600 bg-gray-800 text-gray-100 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Longitude
             </label>
             <input
@@ -132,7 +132,7 @@ export default function LocationStep({
               value={manualLongitude}
               onChange={(e) => setManualLongitude(e.target.value)}
               placeholder="-180 to 180"
-              className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-600 bg-gray-800 text-gray-100 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
             />
           </div>
         </div>

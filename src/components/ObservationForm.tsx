@@ -118,26 +118,26 @@ export default function ObservationForm() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-8">
+    <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700">
       {/* Progress indicator */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
-          <div className={`text-sm font-medium ${currentStep === 'photos' ? 'text-blue-600' : 'text-gray-500'}`}>
+          <div className={`text-sm font-medium ${currentStep === 'photos' ? 'text-blue-400' : 'text-gray-400'}`}>
             1. Photos
           </div>
-          <div className={`text-sm font-medium ${currentStep === 'location' ? 'text-blue-600' : 'text-gray-500'}`}>
+          <div className={`text-sm font-medium ${currentStep === 'location' ? 'text-blue-400' : 'text-gray-400'}`}>
             2. Location
           </div>
-          <div className={`text-sm font-medium ${currentStep === 'description' ? 'text-blue-600' : 'text-gray-500'}`}>
+          <div className={`text-sm font-medium ${currentStep === 'description' ? 'text-blue-400' : 'text-gray-400'}`}>
             3. Description
           </div>
-          <div className={`text-sm font-medium ${currentStep === 'review' ? 'text-blue-600' : 'text-gray-500'}`}>
+          <div className={`text-sm font-medium ${currentStep === 'review' ? 'text-blue-400' : 'text-gray-400'}`}>
             4. Review
           </div>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-gray-700 rounded-full h-2">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
             style={{
               width: currentStep === 'photos' ? '25%' : currentStep === 'location' ? '50%' : currentStep === 'description' ? '75%' : '100%'
             }}
