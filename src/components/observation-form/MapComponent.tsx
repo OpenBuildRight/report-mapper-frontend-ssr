@@ -1,6 +1,6 @@
 'use client'
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet'
 import MarkerClusterGroup from '../map/MarkerClusterGroup'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -9,6 +9,7 @@ import { PhotoWithMetadata } from '@/types/observation'
 import ClusterMarker from '../icons/ClusterMarker'
 import MapMarkerWithLabel from '../icons/MapMarkerWithLabel'
 import { getPhotoLabel } from '@/lib/photoLabels'
+import { useEffect } from 'react'
 
 // Fix for default marker icons in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -59,6 +60,44 @@ function MapClickHandler({
       }
     },
   })
+  return null
+}
+
+function FitBounds({
+  photos,
+  observationLocation
+}: {
+  photos: PhotoWithMetadata[]
+  observationLocation?: { latitude: number; longitude: number } | null
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    const points: L.LatLngExpression[] = []
+
+    // Add photo locations
+    photos.forEach(photo => {
+      if (photo.location) {
+        points.push([photo.location.latitude, photo.location.longitude])
+      }
+    })
+
+    // Add observation location
+    if (observationLocation) {
+      points.push([observationLocation.latitude, observationLocation.longitude])
+    }
+
+    if (points.length > 0) {
+      const bounds = L.latLngBounds(points)
+
+      // Fit bounds with padding and maxZoom to prevent zooming in too far
+      map.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 15 // Don't zoom in further than level 15
+      })
+    }
+  }, [map, photos, observationLocation])
+
   return null
 }
 
@@ -130,6 +169,10 @@ export default function MapComponent({
           onMapClick={onMapClick}
           editingPhotoId={editingPhotoId}
           onPhotoLocationChange={onPhotoLocationChange}
+        />
+        <FitBounds
+          photos={photosWithLocation}
+          observationLocation={observationLocation}
         />
 
         {/* Photo markers with clustering */}
@@ -211,7 +254,10 @@ export default function MapComponent({
                   )}
                   {onPhotoDelete && (
                     <button
-                      onClick={() => onPhotoDelete(photo.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onPhotoDelete(photo.id)
+                      }}
                       className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
                     >
                       Delete Photo
