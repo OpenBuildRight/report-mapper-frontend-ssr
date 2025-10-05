@@ -1,9 +1,12 @@
 'use client'
 
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { PhotoWithMetadata } from '@/types/observation'
+import ClusterMarker from '../icons/ClusterMarker'
 
 // Fix for default marker icons in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -80,6 +83,32 @@ export default function MapComponent({
 }: MapComponentProps) {
   const photosWithLocation = photos.filter(p => p.location)
 
+  // Create custom cluster icon
+  const createClusterCustomIcon = (cluster: any) => {
+    const count = cluster.getChildCount()
+
+    // Determine color based on count
+    const getClusterColor = (count: number) => {
+      if (count < 10) return '#3b82f6' // blue
+      if (count < 50) return '#8b5cf6' // purple
+      if (count < 100) return '#f97316' // orange
+      return '#ef4444' // red
+    }
+
+    const color = getClusterColor(count)
+
+    // Render React component to HTML string
+    const iconHtml = renderToStaticMarkup(
+      <ClusterMarker count={count} color={color} />
+    )
+
+    return L.divIcon({
+      html: iconHtml,
+      className: 'custom-cluster-icon',
+      iconSize: L.point(40, 40, true),
+    })
+  }
+
   return (
     <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-600">
       <MapContainer
@@ -97,8 +126,12 @@ export default function MapComponent({
           onPhotoLocationChange={onPhotoLocationChange}
         />
 
-        {/* Photo markers */}
-        {photosWithLocation.map((photo) => (
+        {/* Photo markers with clustering */}
+        <MarkerClusterGroup
+          chunkedLoading
+          iconCreateFunction={createClusterCustomIcon}
+        >
+          {photosWithLocation.map((photo) => (
           <Marker
             key={photo.id}
             position={[photo.location!.latitude, photo.location!.longitude]}
@@ -148,8 +181,9 @@ export default function MapComponent({
             </Popup>
           </Marker>
         ))}
+        </MarkerClusterGroup>
 
-        {/* Observation location marker */}
+        {/* Observation location marker (not clustered) */}
         {observationLocation && (
           <Marker
             position={[observationLocation.latitude, observationLocation.longitude]}
