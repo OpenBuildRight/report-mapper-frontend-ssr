@@ -1,8 +1,12 @@
 'use client'
 
+import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { PhotoWithMetadata } from '@/types/observation'
 import { extractGPSFromImage } from '@/lib/exif'
 import PhotoCard from './PhotoCard'
+
+const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false })
 
 interface PhotoUploadStepProps {
   photos: PhotoWithMetadata[]
@@ -10,6 +14,8 @@ interface PhotoUploadStepProps {
 }
 
 export default function PhotoUploadStep({ photos, onPhotosChange }: PhotoUploadStepProps) {
+  const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null)
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
 
@@ -45,6 +51,18 @@ export default function PhotoUploadStep({ photos, onPhotosChange }: PhotoUploadS
     )
   }
 
+  const handlePhotoLocationChange = (photoId: string, lat: number, lng: number) => {
+    onPhotosChange(
+      photos.map(p => p.id === photoId ? { ...p, location: { latitude: lat, longitude: lng } } : p)
+    )
+    setEditingPhotoId(null)
+  }
+
+  const photosWithLocation = photos.filter(p => p.location)
+  const defaultCenter = photosWithLocation.length > 0
+    ? photosWithLocation[0].location!
+    : { latitude: 0, longitude: 0 }
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4 text-gray-100">Upload Photos</h2>
@@ -74,6 +92,26 @@ export default function PhotoUploadStep({ photos, onPhotosChange }: PhotoUploadS
       {photos.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-200">Uploaded Photos ({photos.length})</h3>
+
+          {photosWithLocation.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-300 mb-3">Photo Locations</h4>
+              {editingPhotoId && (
+                <div className="mb-2 bg-yellow-900 border border-yellow-700 rounded p-2 text-sm text-yellow-200">
+                  Click on the map to set a new location for the selected photo
+                </div>
+              )}
+              <MapComponent
+                center={defaultCenter}
+                photos={photos}
+                onPhotoDelete={handleRemovePhoto}
+                onPhotoLocationChange={handlePhotoLocationChange}
+                onStartEditingPhoto={setEditingPhotoId}
+                editingPhotoId={editingPhotoId}
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {photos.map((photo) => (
               <PhotoCard

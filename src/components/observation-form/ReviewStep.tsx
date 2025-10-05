@@ -10,16 +10,7 @@ interface ReviewStepProps {
 }
 
 export default function ReviewStep({ formData }: ReviewStepProps) {
-  const photoLocations = formData.photos
-    .filter(p => p.location)
-    .map(p => ({ id: p.id, ...p.location! }))
-
-  const allMarkers = formData.location
-    ? [
-        { id: 'observation', latitude: formData.location.latitude, longitude: formData.location.longitude, isObservation: true },
-        ...photoLocations.map(loc => ({ ...loc, isObservation: false }))
-      ]
-    : photoLocations.map(loc => ({ ...loc, isObservation: false }))
+  const defaultCenter = formData.location || formData.photos.find(p => p.location)?.location || { latitude: 0, longitude: 0 }
 
   return (
     <div>
@@ -47,12 +38,11 @@ export default function ReviewStep({ formData }: ReviewStepProps) {
                 {formData.location.latitude.toFixed(6)}, {formData.location.longitude.toFixed(6)}
               </p>
             </div>
-            {allMarkers.length > 0 && (
-              <MapComponent
-                center={formData.location}
-                markers={allMarkers}
-              />
-            )}
+            <MapComponent
+              center={defaultCenter}
+              photos={formData.photos}
+              observationLocation={formData.location}
+            />
           </div>
         )}
 

@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { PhotoWithMetadata } from '@/types/observation'
 
 // Fix for default marker icons in Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -12,14 +13,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 })
 
-// Custom icons
+// Custom icons - larger observation marker
 const observationIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  iconSize: [35, 57],
+  iconAnchor: [17, 57],
+  popupAnchor: [1, -50],
+  shadowSize: [57, 57]
 })
 
 const photoIcon = new L.Icon({
@@ -31,23 +32,33 @@ const photoIcon = new L.Icon({
   shadowSize: [41, 41]
 })
 
-interface MarkerData {
-  id: string
-  latitude: number
-  longitude: number
-  isObservation?: boolean
-}
-
 interface MapComponentProps {
   center: { latitude: number; longitude: number }
-  markers: MarkerData[]
+  photos?: PhotoWithMetadata[]
+  observationLocation?: { latitude: number; longitude: number } | null
   onMapClick?: (lat: number, lng: number) => void
+  onPhotoDelete?: (photoId: string) => void
+  onPhotoLocationChange?: (photoId: string, lat: number, lng: number) => void
+  onSetObservationLocation?: (lat: number, lng: number) => void
+  editingPhotoId?: string | null
+  onSelectPhotoLocation?: (photoId: string) => void
+  onStartEditingPhoto?: (photoId: string) => void
 }
 
-function MapClickHandler({ onMapClick }: { onMapClick?: (lat: number, lng: number) => void }) {
+function MapClickHandler({
+  onMapClick,
+  editingPhotoId,
+  onPhotoLocationChange
+}: {
+  onMapClick?: (lat: number, lng: number) => void
+  editingPhotoId?: string | null
+  onPhotoLocationChange?: (photoId: string, lat: number, lng: number) => void
+}) {
   useMapEvents({
     click(e) {
-      if (onMapClick) {
+      if (editingPhotoId && onPhotoLocationChange) {
+        onPhotoLocationChange(editingPhotoId, e.latlng.lat, e.latlng.lng)
+      } else if (onMapClick) {
         onMapClick(e.latlng.lat, e.latlng.lng)
       }
     },
@@ -55,9 +66,22 @@ function MapClickHandler({ onMapClick }: { onMapClick?: (lat: number, lng: numbe
   return null
 }
 
-export default function MapComponent({ center, markers, onMapClick }: MapComponentProps) {
+export default function MapComponent({
+  center,
+  photos = [],
+  observationLocation,
+  onMapClick,
+  onPhotoDelete,
+  onPhotoLocationChange,
+  onSetObservationLocation,
+  editingPhotoId,
+  onSelectPhotoLocation,
+  onStartEditingPhoto
+}: MapComponentProps) {
+  const photosWithLocation = photos.filter(p => p.location)
+
   return (
-    <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
+    <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-600">
       <MapContainer
         center={[center.latitude, center.longitude]}
         zoom={13}
@@ -67,19 +91,85 @@ export default function MapComponent({ center, markers, onMapClick }: MapCompone
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {onMapClick && <MapClickHandler onMapClick={onMapClick} />}
-        {markers.map((marker) => (
+        <MapClickHandler
+          onMapClick={onMapClick}
+          editingPhotoId={editingPhotoId}
+          onPhotoLocationChange={onPhotoLocationChange}
+        />
+
+        {/* Photo markers */}
+        {photosWithLocation.map((photo) => (
           <Marker
-            key={marker.id}
-            position={[marker.latitude, marker.longitude]}
-            icon={marker.isObservation ? observationIcon : photoIcon}
+            key={photo.id}
+            position={[photo.location!.latitude, photo.location!.longitude]}
+            icon={photoIcon}
           >
-            <Popup>
-              {marker.isObservation ? 'Observation Location' : 'Photo Location'}<br />
-              {marker.latitude.toFixed(6)}, {marker.longitude.toFixed(6)}
+            <Popup maxWidth={250}>
+              <div className="p-2">
+                <img
+                  src={photo.preview}
+                  alt="Photo preview"
+                  className="w-full h-32 object-cover rounded mb-2"
+                />
+                <p className="text-sm mb-2 text-gray-800">
+                  {photo.description || 'No description'}
+                </p>
+                <p className="text-xs text-gray-600 mb-3">
+                  {photo.location!.latitude.toFixed(6)}, {photo.location!.longitude.toFixed(6)}
+                </p>
+
+                <div className="flex flex-col gap-2">
+                  {onSelectPhotoLocation && (
+                    <button
+                      onClick={() => onSelectPhotoLocation(photo.id)}
+                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+                    >
+                      Use as Observation Location
+                    </button>
+                  )}
+                  {onPhotoLocationChange && onStartEditingPhoto && (
+                    <button
+                      onClick={() => onStartEditingPhoto(photo.id)}
+                      className="text-xs bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700 transition"
+                    >
+                      {editingPhotoId === photo.id ? 'Editing...' : 'Edit Location'}
+                    </button>
+                  )}
+                  {onPhotoDelete && (
+                    <button
+                      onClick={() => onPhotoDelete(photo.id)}
+                      className="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
+                    >
+                      Delete Photo
+                    </button>
+                  )}
+                </div>
+              </div>
             </Popup>
           </Marker>
         ))}
+
+        {/* Observation location marker */}
+        {observationLocation && (
+          <Marker
+            position={[observationLocation.latitude, observationLocation.longitude]}
+            icon={observationIcon}
+          >
+            <Popup>
+              <div className="p-2">
+                <p className="font-semibold text-gray-800 mb-1">Observation Location</p>
+                <p className="text-xs text-gray-600">
+                  {observationLocation.latitude.toFixed(6)}, {observationLocation.longitude.toFixed(6)}
+                </p>
+                {onSetObservationLocation && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Click on the map to change location
+                  </p>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        )}
       </MapContainer>
     </div>
   )

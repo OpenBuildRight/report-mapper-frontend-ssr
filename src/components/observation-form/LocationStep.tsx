@@ -24,6 +24,7 @@ export default function LocationStep({
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
   const [manualLatitude, setManualLatitude] = useState('')
   const [manualLongitude, setManualLongitude] = useState('')
+  const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null)
 
   useEffect(() => {
     // Auto-populate location on mount
@@ -69,9 +70,25 @@ export default function LocationStep({
     onLocationChange({ latitude: lat, longitude: lng })
   }
 
-  const photoLocations = photos
-    .filter(p => p.location)
-    .map(p => ({ id: p.id, ...p.location! }))
+  const handleSelectPhotoLocation = (photoId: string) => {
+    const photo = photos.find(p => p.id === photoId)
+    if (photo?.location) {
+      onLocationChange(photo.location)
+    }
+  }
+
+  const handlePhotoLocationEdit = (photoId: string, lat: number, lng: number) => {
+    onPhotoLocationChange(photoId, { latitude: lat, longitude: lng })
+    setEditingPhotoId(null)
+  }
+
+  const handlePhotoDelete = (photoId: string) => {
+    // This will be handled by the parent component through the form
+    // For now, we just alert - the actual deletion happens in PhotoUploadStep
+    alert('Photo deletion should be done in the photo upload step')
+  }
+
+  const defaultCenter = location || photos.find(p => p.location)?.location || { latitude: 0, longitude: 0 }
 
   return (
     <div>
@@ -93,15 +110,27 @@ export default function LocationStep({
             <p className="text-lg font-semibold text-blue-200">
               {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
             </p>
+            <p className="text-xs text-blue-300 mt-2">
+              Click on the map to change the observation location, or click "Use as Observation Location" on a photo marker
+            </p>
           </div>
 
+          {editingPhotoId && (
+            <div className="mb-2 bg-yellow-900 border border-yellow-700 rounded p-2 text-sm text-yellow-200">
+              Click on the map to set a new location for the selected photo
+            </div>
+          )}
+
           <MapComponent
-            center={location}
-            markers={[
-              { id: 'observation', latitude: location.latitude, longitude: location.longitude, isObservation: true },
-              ...photoLocations.map(loc => ({ ...loc, isObservation: false }))
-            ]}
+            center={defaultCenter}
+            photos={photos}
+            observationLocation={location}
             onMapClick={handleMapClick}
+            onSelectPhotoLocation={handleSelectPhotoLocation}
+            onPhotoLocationChange={handlePhotoLocationEdit}
+            onStartEditingPhoto={setEditingPhotoId}
+            onPhotoDelete={handlePhotoDelete}
+            editingPhotoId={editingPhotoId}
           />
         </div>
       )}
