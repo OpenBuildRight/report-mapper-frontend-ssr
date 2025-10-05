@@ -1,18 +1,17 @@
 /**
  * Generate letter labels for photos (A, B, C... Z, AA, AB, AC...)
+ * Uses base-26 math with no upper limit
  */
 export function getPhotoLabel(index: number): string {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let result = ''
+  let num = index
 
-  if (index < 26) {
-    return alphabet[index]
+  while (num >= 0) {
+    result = String.fromCharCode(65 + (num % 26)) + result
+    num = Math.floor(num / 26) - 1
   }
 
-  // For 26+, use AA, AB, AC, etc.
-  const firstLetter = alphabet[Math.floor(index / 26) - 1]
-  const secondLetter = alphabet[index % 26]
-
-  return `${firstLetter}${secondLetter}`
+  return result
 }
 
 /**

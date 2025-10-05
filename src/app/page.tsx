@@ -1,26 +1,41 @@
+import HomePage from '@/components/HomePage'
+import { Observation } from '@/types/observation'
+
+// TODO: Fetch observations from API
+// For now using mock data
+const mockObservations: Observation[] = [
+  {
+    id: '1',
+    description: 'Beautiful sunset observation near Madison, Wisconsin',
+    location: {
+      latitude: 43.0731,
+      longitude: -89.4012,
+    },
+    photos: [
+      {
+        id: 'p1',
+        url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500',
+        description: 'Main sunset view from the observation point',
+        location: {
+          latitude: 43.0731,
+          longitude: -89.4012,
+        },
+      },
+      {
+        id: 'p2',
+        url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500',
+        description: 'Close-up of the sun',
+      },
+    ],
+    createdAt: '2025-01-15T18:30:00Z',
+    createdBy: {
+      id: 'user1',
+      name: 'John Doe',
+    },
+    canEdit: false,
+  },
+]
+
 export default function Home() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">Welcome to Report Mapper</h1>
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <p className="text-lg text-gray-700 mb-4">
-          This is the home page. Use the navigation bar above to access different sections of the application.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h2 className="text-xl font-semibold mb-2">Report Observation</h2>
-            <p className="text-gray-600">
-              Navigate to the Report Observation page to view and manage observations.
-            </p>
-          </div>
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h2 className="text-xl font-semibold mb-2">Getting Started</h2>
-            <p className="text-gray-600">
-              Sign in using the button in the navigation bar to access all features.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  return <HomePage observations={mockObservations} />
 }
