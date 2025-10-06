@@ -65,6 +65,8 @@ Objects are version controlled. Repeated modules should be used to efficiently i
 object types. The following variables are present in multiple objects and should be used in a repeated way for version 
 control and the RBAC model for model revision change management.
 
+Note that when a revision is published, all other revisions for an object are unpublished. 
+
 | Field                     | Type     | Required |
 |---------------------------|----------|----------|
 | revision_id               | int      | Yes      |
@@ -95,17 +97,18 @@ control and the RBAC model for model revision change management.
 | owner                     | string   | Yes      | The user_id of the user who created the image. |
 
 #### Observation Revision
-| Field               | Type         | Required | Description                                                                                                       |
-|---------------------|--------------|----------|-------------------------------------------------------------------------------------------------------------------|
-| revision_id         | int          | Yes      | Primary key for the revision. Auto increments from 0 for each observation.                                        |
-| observation_id      | string       | Yes      | UUID of observation. An observation can have multiple revisions.                                                  |
-| description         | string       | No       | Description of the revision                                                                                       |
-| image_ids           | list(object) | No       | List of image Id and revision references                                                                          | 
-| updated_at          | datetime     | Yes      | Date and time the revision was last updated                                                                       |
-| created_at          | datetime     | Yes      | Date and time the observation was created                                                                         |
-| revision_created_at | datetime     | Yes      | Date and time the observation revision was created                                                                |
-| revision_updated_at | datetime     | Yes      | Date and to time the observation revision was created.                                                            | 
-| published           | boolean      | Yes      | Is the revision published. Only one version of a revision is published. Published revisions are immutable.        |
-| submitted           | boolean      | Yes      | Is the revision submitted for review.                                                                             |
-| owner               | string       | Yes      | The user_id of the user who submitted the revision. Users can ownly create revisions from their own observations. |
+| Field               | Type         | Required | Description                                                                                                      |
+|---------------------|--------------|----------|------------------------------------------------------------------------------------------------------------------|
+| revision_id         | int          | Yes      | Primary key for the revision. Auto increments from 0 for each observation.                                       |
+| observation_id      | string       | Yes      | UUID of observation. An observation can have multiple revisions.                                                 |
+| description         | string       | No       | Description of the revision                                                                                      |
+| image_ids           | list(object) | No       | List of image Id and revision references                                                                         | 
+| updated_at          | datetime     | Yes      | Date and time the revision was last updated                                                                      |
+| created_at          | datetime     | Yes      | Date and time the observation was created                                                                        |
+| revision_created_at | datetime     | Yes      | Date and time the observation revision was created                                                               |
+| revision_updated_at | datetime     | Yes      | Date and to time the observation revision was created.                                                           | 
+| published           | boolean      | Yes      | Is the revision published. Only one version of a revision is published. Published revisions are immutable.       |
+| submitted           | boolean      | Yes      | Is the revision submitted for review.                                                                            |
+| owner               | string       | Yes      | The user_id of the user who submitted the revision. Users can only create revisions from their own observations. |
 
+Since observations contain images, when an observation is published, all of it's images are also published. 

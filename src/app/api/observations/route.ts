@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext, requireAuth, requirePermission, handleAuthError } from '@/lib/middleware/auth'
+import { getAuthContext, requireAuth, handleAuthError } from '@/lib/middleware/auth'
 import { createObservation, getObservationsFiltered } from '@/lib/services/observations'
 import { parseFiltersFromSearchParams } from '@/lib/services/observation-filters'
-import { Permission } from '@/types/rbac'
-import { hasPermission } from '@/lib/rbac'
 import { canEditObservation, canDeleteObservation, canPublishObservation } from '@/lib/rbac'
 
 /**
@@ -67,7 +65,6 @@ export async function POST(request: NextRequest) {
     let description: string | undefined
     let location: { latitude: number; longitude: number } | undefined
     let imageIds: any[] | undefined
-    let autoPublish = false
 
     // Handle both JSON and FormData
     if (contentType?.includes('application/json')) {
@@ -75,7 +72,6 @@ export async function POST(request: NextRequest) {
       description = body.description
       location = body.location
       imageIds = body.imageIds
-      autoPublish = body.autoPublish || false
     } else if (contentType?.includes('multipart/form-data')) {
       const formData = await request.formData()
 
@@ -102,22 +98,20 @@ export async function POST(request: NextRequest) {
       // 3. Submits observation with those image IDs
     }
 
-    // Check if user can auto-publish
-    const canAutoPublish = autoPublish && hasPermission(context.roles, Permission.PUBLISH_OWN_OBSERVATIONS)
-
     const observation = await createObservation({
       description,
       location,
       imageIds,
       owner: context.userId!,
-      autoPublish: canAutoPublish,
+      autoPublish: false,
     })
 
     return NextResponse.json({
       id: observation.observation_id,
       revisionId: observation.revision_id,
       published: observation.published,
-      message: canAutoPublish ? 'Observation published' : 'Observation created, awaiting review',
+      submitted: observation.submitted,
+      message: 'Observation created',
     }, { status: 201 })
   } catch (error) {
     return handleAuthError(error)

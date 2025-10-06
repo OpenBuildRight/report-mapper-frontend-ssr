@@ -86,6 +86,59 @@ components:
         canPublish:
           type: boolean
 
+    ImageRevision:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique image identifier
+        revisionId:
+          type: integer
+          description: Revision number
+        imageKey:
+          type: string
+          description: Path to object store location of image
+        description:
+          type: string
+          description: Image description
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+        metadataCreatedAt:
+          type: string
+          format: date-time
+          description: Date and time from image metadata
+        createdAt:
+          type: string
+          format: date-time
+          description: Original image creation date
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update date
+        revisionCreatedAt:
+          type: string
+          format: date-time
+          description: Revision creation date
+        published:
+          type: boolean
+        submitted:
+          type: boolean
+        owner:
+          type: string
+        canEdit:
+          type: boolean
+        canDelete:
+          type: boolean
+        canPublish:
+          type: boolean
+
     Error:
       type: object
       properties:
@@ -608,8 +661,8 @@ paths:
 
   /images/{id}:
     get:
-      summary: Get image metadata
-      description: Get metadata for a specific image
+      summary: Get all revisions for an image
+      description: Returns all revisions of an image that the user has permission to view
       tags:
         - Images
       parameters:
@@ -620,9 +673,330 @@ paths:
             type: string
       responses:
         '200':
-          description: Image metadata
+          description: List of image revisions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imageId:
+                    type: string
+                  revisions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ImageRevision'
+                  total:
+                    type: integer
         '404':
           description: Image not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /images/{id}/revisions:
+    post:
+      summary: Create a new revision of an existing image
+      description: |
+        Create a new revision from an existing image.
+
+        **Access Control**: Only the owner with edit permission can create a revision.
+
+        **Immutable Properties** (copied from base image, cannot be changed):
+        - id (stays the same across all revisions)
+        - image_key (cannot change file location)
+        - created_at (original creation date)
+        - owner (ownership cannot be transferred via revisions)
+
+        **Mutable Properties** (can be changed in the new revision):
+        - description
+        - location (image_metadata_location)
+        - published/submitted status
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The image ID to create a revision for
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+      responses:
+        '201':
+          description: New revision created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  revisionId:
+                    type: integer
+                  immutableProperties:
+                    type: object
+                    properties:
+                      imageId:
+                        type: string
+                      imageKey:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                      owner:
+                        type: string
+                  mutableProperties:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                      location:
+                        type: object
+                        properties:
+                          latitude:
+                            type: number
+                          longitude:
+                            type: number
+                  revisionCreatedAt:
+                    type: string
+                    format: date-time
+                  published:
+                    type: boolean
+                  submitted:
+                    type: boolean
+        '400':
+          description: Invalid request - attempting to change immutable property
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden - only owner can create revisions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Image not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /images/{id}/{revisionId}:
+    get:
+      summary: Get a specific image revision
+      description: Retrieve a specific revision by image ID and revision ID
+      tags:
+        - Images
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Image revision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageRevision'
+        '403':
+          description: Forbidden - insufficient permissions
+        '404':
+          description: Image revision not found
+
+    put:
+      summary: Update a specific image revision
+      description: Update metadata of an unpublished image revision
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+      responses:
+        '200':
+          description: Revision updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  revisionId:
+                    type: integer
+                  description:
+                    type: string
+                  location:
+                    type: object
+                  updatedAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Cannot edit published revision
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+        '404':
+          description: Image revision not found
+
+    delete:
+      summary: Delete a specific image revision
+      description: Delete an unpublished image revision
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Revision deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Cannot delete published revision
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+        '404':
+          description: Image revision not found
+
+    patch:
+      summary: Publish or submit an image revision
+      description: |
+        Perform an action on a specific image revision:
+        - **publish**: Publish the revision (requires publish permission)
+        - **submit**: Submit the revision for review (requires ownership)
+      tags:
+        - Images
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [publish, submit]
+                  description: The action to perform
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  revisionId:
+                    type: integer
+                  published:
+                    type: boolean
+                  submitted:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid action
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+        '404':
+          description: Image revision not found
 
 tags:
   - name: Observations

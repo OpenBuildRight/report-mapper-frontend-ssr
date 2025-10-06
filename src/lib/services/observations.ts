@@ -252,13 +252,40 @@ export async function getObservationsByOwner(
 
 /**
  * Publish an observation revision
+ * Also publishes all associated images per REQUIREMENTS.md line 114
  */
 export async function publishObservationRevision(
   observationId: string,
   revisionId: number
 ): Promise<void> {
   const collection = await getObservationRevisionsCollection()
+
+  // Get the observation revision to find its images
+  const observation = await collection.findOne({
+    observation_id: observationId,
+    revision_id: revisionId,
+  })
+
+  if (!observation) {
+    throw new Error('Observation revision not found')
+  }
+
+  // Publish the observation revision
   await publishObservationRevisionInternal(collection, observationId, revisionId)
+
+  // Publish all associated images
+  if (observation.image_ids && observation.image_ids.length > 0) {
+    const { publishImageRevision } = await import('./images')
+
+    for (const imageRef of observation.image_ids) {
+      try {
+        await publishImageRevision(imageRef.id, imageRef.revision_id)
+      } catch (error) {
+        console.error(`Failed to publish image ${imageRef.id} revision ${imageRef.revision_id}:`, error)
+        // Continue publishing other images even if one fails
+      }
+    }
+  }
 }
 
 /**

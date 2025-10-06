@@ -122,6 +122,17 @@ export async function getPublishedImageRevision(
 }
 
 /**
+ * Get all revisions for an image
+ */
+export async function getImageRevisions(imageId: string) {
+  const collection = await getImageRevisionsCollection()
+  return await collection
+    .find({ id: imageId })
+    .sort({ revision_id: -1 })
+    .toArray()
+}
+
+/**
  * Get specific image revision
  */
 export async function getImageRevision(
@@ -168,9 +179,51 @@ export async function submitImageForReview(
 }
 
 /**
+ * Delete a specific image revision
+ */
+export async function deleteImageRevision(
+  imageId: string,
+  revisionId: number
+): Promise<void> {
+  const collection = await getImageRevisionsCollection()
+  await collection.deleteOne({ id: imageId, revision_id: revisionId })
+}
+
+/**
  * Delete an image (all revisions)
  */
 export async function deleteImage(imageId: string): Promise<void> {
   const collection = await getImageRevisionsCollection()
   await deleteAllImageRevisions(collection, imageId)
+}
+
+/**
+ * Update image revision metadata
+ */
+export async function updateImageRevision(
+  imageId: string,
+  revisionId: number,
+  input: UpdateImageInput
+): Promise<void> {
+  const collection = await getImageRevisionsCollection()
+
+  const updateDoc: any = {
+    updated_at: new Date(),
+  }
+
+  if (input.description !== undefined) {
+    updateDoc.description = input.description
+  }
+
+  if (input.location !== undefined) {
+    updateDoc.image_metadata_location = {
+      type: 'Point',
+      coordinates: [input.location.longitude, input.location.latitude],
+    }
+  }
+
+  await collection.updateOne(
+    { id: imageId, revision_id: revisionId },
+    { $set: updateDoc }
+  )
 }

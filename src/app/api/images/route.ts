@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, handleAuthError } from '@/lib/middleware/auth'
 import { createImage } from '@/lib/services/images'
-import { hasPermission } from '@/lib/rbac'
-import { Permission } from '@/types/rbac'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -26,7 +24,6 @@ export async function POST(request: NextRequest) {
     const latitude = formData.get('latitude') as string | null
     const longitude = formData.get('longitude') as string | null
     const metadataCreatedAt = formData.get('metadataCreatedAt') as string | null
-    const autoPublish = formData.get('autoPublish') === 'true'
 
     // Generate a unique key for the image
     const ext = file.name.split('.').pop()
@@ -50,16 +47,13 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(metadataCreatedAt),
     } : undefined
 
-    // Check if user can auto-publish
-    const canAutoPublish = autoPublish && hasPermission(context.roles, Permission.PUBLISH_OWN_OBSERVATIONS)
-
     const image = await createImage({
       imageKey,
       description: description || undefined,
       location,
       metadata,
       owner: context.userId!,
-      autoPublish: canAutoPublish,
+      autoPublish: false,
     })
 
     return NextResponse.json({
@@ -67,7 +61,8 @@ export async function POST(request: NextRequest) {
       revisionId: image.revision_id,
       imageKey: image.image_key,
       published: image.published,
-      message: canAutoPublish ? 'Image uploaded and published' : 'Image uploaded, awaiting review',
+      submitted: image.submitted,
+      message: 'Image uploaded',
     }, { status: 201 })
   } catch (error) {
     return handleAuthError(error)
