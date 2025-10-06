@@ -79,6 +79,22 @@ export default function UserProfile() {
                   <span className="text-gray-200">{session.user.email}</span>
                 </div>
               )}
+
+              {session.user?.roles && session.user.roles.length > 0 && (
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-400">Roles:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {session.user.roles.map((role) => (
+                      <span
+                        key={role}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-900 text-blue-200"
+                      >
+                        {role}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-700">

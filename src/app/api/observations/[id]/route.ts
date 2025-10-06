@@ -26,7 +26,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const context = await getAuthContext()
+    const context = await getAuthContext(request)
     const { searchParams } = new URL(request.url)
     const revisionIdParam = searchParams.get('revisionId')
 
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const context = await requireAuth()
+    const context = await requireAuth(request)
     const body = await request.json()
 
     // Get current observation to check permissions
@@ -151,7 +151,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const context = await requireAuth()
+    const context = await requireAuth(request)
 
     // Get observation to check permissions
     const observation = await getPublishedObservationRevision(id)

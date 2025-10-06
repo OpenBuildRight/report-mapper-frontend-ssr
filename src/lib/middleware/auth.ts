@@ -4,17 +4,36 @@ import { authOptions } from '@/lib/auth'
 import { getUserRoles } from '@/lib/users'
 import { Permission, Role } from '@/types/rbac'
 import { hasPermission } from '@/lib/rbac'
+import { extractBearerToken, verifyBearerToken } from './bearer-auth'
 
 export interface AuthContext {
   userId?: string
   roles: Role[]
   isAuthenticated: boolean
+  authMethod?: 'session' | 'bearer'
 }
 
 /**
  * Get authentication context from request
+ * Supports both session cookies (browser) and OAuth bearer tokens (API)
  */
-export async function getAuthContext(): Promise<AuthContext> {
+export async function getAuthContext(request?: NextRequest): Promise<AuthContext> {
+  // First, try bearer token authentication (for API access)
+  if (request) {
+    const bearerToken = extractBearerToken(request)
+    if (bearerToken) {
+      const bearerAuth = await verifyBearerToken(bearerToken)
+      if (bearerAuth) {
+        return {
+          ...bearerAuth,
+          authMethod: 'bearer',
+        }
+      }
+      // Invalid bearer token - fall through to session check
+    }
+  }
+
+  // Fall back to session authentication (for browser)
   const session = await getServerSession(authOptions)
 
   if (!session || !session.user) {
@@ -32,14 +51,15 @@ export async function getAuthContext(): Promise<AuthContext> {
     userId,
     roles,
     isAuthenticated: true,
+    authMethod: 'session',
   }
 }
 
 /**
  * Require authentication - returns 401 if not authenticated
  */
-export async function requireAuth(): Promise<AuthContext> {
-  const context = await getAuthContext()
+export async function requireAuth(request?: NextRequest): Promise<AuthContext> {
+  const context = await getAuthContext(request)
 
   if (!context.isAuthenticated) {
     throw new UnauthorizedError('Authentication required')
@@ -51,8 +71,8 @@ export async function requireAuth(): Promise<AuthContext> {
 /**
  * Require specific permission - returns 403 if permission not granted
  */
-export async function requirePermission(permission: Permission): Promise<AuthContext> {
-  const context = await requireAuth()
+export async function requirePermission(permission: Permission, request?: NextRequest): Promise<AuthContext> {
+  const context = await requireAuth(request)
 
   if (!hasPermission(context.roles, permission)) {
     throw new ForbiddenError(`Permission required: ${permission}`)
@@ -64,8 +84,8 @@ export async function requirePermission(permission: Permission): Promise<AuthCon
 /**
  * Check if current user has permission
  */
-export async function checkPermission(permission: Permission): Promise<boolean> {
-  const context = await getAuthContext()
+export async function checkPermission(permission: Permission, request?: NextRequest): Promise<boolean> {
+  const context = await getAuthContext(request)
   return hasPermission(context.roles, permission)
 }
 

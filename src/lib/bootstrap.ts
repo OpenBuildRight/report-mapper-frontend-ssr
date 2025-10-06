@@ -25,6 +25,8 @@ function loadBootstrapConfig(): BootstrapConfig | null {
     return null
   }
 
+  console.log(`Loading bootstrap config from: ${configPath}`)
+
   if (!existsSync(configPath)) {
     console.warn(`Bootstrap config file not found: ${configPath}`)
     return null
@@ -32,6 +34,7 @@ function loadBootstrapConfig(): BootstrapConfig | null {
 
   try {
     const fileContents = readFileSync(configPath, 'utf8')
+    console.log(`Bootstrap config file contents:\n${fileContents}`)
     const config = parse(fileContents) as BootstrapConfig
 
     if (!config.users || !Array.isArray(config.users)) {
@@ -39,6 +42,7 @@ function loadBootstrapConfig(): BootstrapConfig | null {
       return null
     }
 
+    console.log(`Found ${config.users.length} users in bootstrap config`)
     return config
   } catch (error) {
     console.error('Error loading bootstrap config:', error)

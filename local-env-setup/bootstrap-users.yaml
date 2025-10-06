@@ -1,0 +1,13 @@
+# Bootstrap Users Configuration
+# Users defined here will be automatically created/updated on app startup
+# These should match the users created in Keycloak (see main.tf)
+
+users:
+  # Admin user - created by Terraform as alice@domain.com
+  # Has all permissions for testing
+  - email: alice@domain.com
+    name: Alice Aliceberg
+    roles:
+      - SECURITY_ADMIN
+      - MODERATOR
+      - VALIDATED_USER
