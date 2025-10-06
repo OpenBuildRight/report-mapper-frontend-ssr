@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           <Navbar />
-          <main className="min-h-screen bg-gray-50">
+          <main className="min-h-screen bg-gray-50 z-9999">
             {children}
           </main>
         </SessionProvider>
