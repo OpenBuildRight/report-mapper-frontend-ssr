@@ -20,10 +20,16 @@ export default function Navbar() {
                 Home
               </Link>
               <Link
-                href="/report-observation"
+                href="/observations/new"
                 className="px-3 py-2 rounded-md hover:bg-gray-700 transition"
               >
-                Report Observation
+                Submit Observation
+              </Link>
+              <Link
+                href="/review"
+                className="px-3 py-2 rounded-md hover:bg-gray-700 transition"
+              >
+                Review
               </Link>
             </div>
           </div>

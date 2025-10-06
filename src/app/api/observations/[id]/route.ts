@@ -8,6 +8,7 @@ import {
   publishObservationRevision,
   submitObservationForReview,
 } from '@/lib/services/observations'
+import { getObservationRevisionsCollection } from '@/lib/db'
 import { canReadObservation, canEditObservation, canDeleteObservation, canPublishObservation } from '@/lib/rbac'
 import { Permission } from '@/types/rbac'
 import { hasPermission } from '@/lib/rbac'
@@ -26,13 +27,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const context = await getAuthContext()
+    const { searchParams } = new URL(request.url)
+    const revisionIdParam = searchParams.get('revisionId')
 
-    // Try to get published version first
-    let observation = await getPublishedObservationRevision(id)
+    let observation
 
-    // If not found or user has permission, try latest
-    if (!observation && context.isAuthenticated) {
-      observation = await getLatestObservationRevision(id)
+    if (revisionIdParam) {
+      // Get specific revision if requested
+      const revisionId = parseInt(revisionIdParam)
+      const collection = await getObservationRevisionsCollection()
+      observation = await collection.findOne({
+        observation_id: id,
+        revision_id: revisionId,
+      })
+    } else {
+      // Try to get published version first
+      observation = await getPublishedObservationRevision(id)
+
+      // If not found or user has permission, try latest
+      if (!observation && context.isAuthenticated) {
+        observation = await getLatestObservationRevision(id)
+      }
     }
 
     if (!observation) {
@@ -60,6 +75,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       } : undefined,
       imageIds: observation.image_ids || [],
       createdAt: observation.created_at.toISOString(),
+      revisionCreatedAt: observation.revision_created_at.toISOString(),
       updatedAt: observation.updated_at.toISOString(),
       published: observation.published,
       submitted: observation.submitted,

@@ -10,6 +10,24 @@ interface PageProps {
   }>
 }
 
+async function getObservation(id: string) {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const response = await fetch(`${baseUrl}/api/observations/${id}`, {
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching observation:', error)
+    return null
+  }
+}
+
 export default async function ObservationPage({ params }: PageProps) {
   const session = await getServerSession(authOptions)
 
@@ -18,9 +36,7 @@ export default async function ObservationPage({ params }: PageProps) {
   }
 
   const { id } = await params
-
-  // TODO: Fetch the actual observation from the backend
-  // For now, we'll show a success message with the ID
+  const observation = await getObservation(id)
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
@@ -37,12 +53,57 @@ export default async function ObservationPage({ params }: PageProps) {
               <p className="text-gray-400">
                 Your observation has been successfully submitted.
               </p>
-              {id && (
-                <p className="text-sm text-gray-500 mt-2">
-                  Observation ID: {id}
+              {observation?.published ? (
+                <p className="text-sm text-green-400 mt-2">
+                  ✓ Published and visible to all users
+                </p>
+              ) : (
+                <p className="text-sm text-yellow-400 mt-2">
+                  ⏳ Awaiting review by a moderator
                 </p>
               )}
             </div>
+
+            {observation && (
+              <div className="border-t border-gray-700 pt-6 mt-6">
+                <h2 className="text-xl font-semibold text-gray-200 mb-4">Observation Details</h2>
+
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-400 mb-1">Description</h3>
+                    <p className="text-gray-200">{observation.description || 'No description provided'}</p>
+                  </div>
+
+                  {observation.location && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-400 mb-1">Location</h3>
+                      <p className="text-gray-200">
+                        {observation.location.latitude.toFixed(6)}, {observation.location.longitude.toFixed(6)}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-400 mb-1">Photos</h3>
+                    <p className="text-gray-200">
+                      {observation.imageIds?.length || 0} photo(s) attached
+                    </p>
+                    {!observation.imageIds?.length && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Note: Photo upload will be available once MinIO is configured
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-400 mb-1">Submitted</h3>
+                    <p className="text-gray-200">
+                      {new Date(observation.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="border-t border-gray-700 pt-6 mt-6">
               <h2 className="text-xl font-semibold text-gray-200 mb-4">What would you like to do next?</h2>
@@ -59,14 +120,6 @@ export default async function ObservationPage({ params }: PageProps) {
                   </Button>
                 </Link>
               </div>
-            </div>
-
-            {/* TODO: Display observation details here once we can fetch them */}
-            <div className="mt-8 p-4 bg-blue-900 border border-blue-700 rounded-lg">
-              <p className="text-sm text-blue-200">
-                <strong>Note:</strong> Your observation has been sent to the backend for processing.
-                Once the backend API is fully implemented, you'll be able to view the complete observation details here.
-              </p>
             </div>
           </div>
         </div>

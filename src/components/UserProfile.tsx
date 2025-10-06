@@ -1,13 +1,30 @@
 'use client'
 
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Button from './Button'
 import {LoginIcon} from "@/components/icons/LoginIcon";
 
 export default function UserProfile() {
   const { data: session, status } = useSession()
   const [showDetails, setShowDetails] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDetails(false)
+      }
+    }
+
+    if (showDetails) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showDetails])
 
   if (status === 'loading') {
     return <Button variant="secondary" disabled>Loading...</Button>
@@ -35,7 +52,7 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <Button
         onClick={() => setShowDetails(!showDetails)}
         variant="secondary"
@@ -44,7 +61,7 @@ export default function UserProfile() {
       </Button>
 
       {showDetails && (
-        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-lg z-50 border border-gray-700">
+        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-lg z-[100] border border-gray-700">
           <div className="p-4">
             <h3 className="text-lg font-bold text-gray-100 mb-3">Profile Information</h3>
 
