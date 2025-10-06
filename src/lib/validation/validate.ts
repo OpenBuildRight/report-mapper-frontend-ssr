@@ -19,7 +19,7 @@ export async function validateBody<T extends z.ZodType>(
         response: NextResponse.json(
           {
             error: 'Validation error',
-            details: error.errors.map(err => ({
+            details: error.issues.map(err => ({
               path: err.path.join('.'),
               message: err.message,
             })),
@@ -56,7 +56,7 @@ export function validateQuery<T extends z.ZodType>(
         response: NextResponse.json(
           {
             error: 'Invalid query parameters',
-            details: error.errors.map(err => ({
+            details: error.issues.map(err => ({
               path: err.path.join('.'),
               message: err.message,
             })),
