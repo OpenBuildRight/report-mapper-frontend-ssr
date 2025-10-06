@@ -60,6 +60,24 @@ NextAuth password and user name will be directly supported.
 
 ### Object Model
 
+#### Version Control
+Objects are version controlled. Repeated modules should be used to efficiently implement version control on multiple 
+object types. The following variables are present in multiple objects and should be used in a repeated way for version 
+control and the RBAC model for model revision change management.
+
+| Field                     | Type     | Required |
+|---------------------------|----------|----------|
+| revision_id               | int      | Yes      |
+| id                        | string   | Yes      |                                                        
+| updated_at                | datetime | Yes      |
+| created_at                | datetime | Yes      |
+| revision_created_at       | datetime | Yes      |
+| published                 | boolean  | Yes      |
+| submitted                 | boolean  | Yes      |
+| owner                     | string   | Yes      |
+
+
+
 #### Image Revision
 | Field                     | Type     | Required | Description                                                                                                |
 |---------------------------|----------|----------|------------------------------------------------------------------------------------------------------------|

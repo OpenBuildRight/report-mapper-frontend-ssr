@@ -1,8 +1,14 @@
-import { getObservationRevisionsCollection, getNextObservationRevisionId } from '../db'
+import { getObservationRevisionsCollection } from '../db'
 import { ObservationRevisionDocument, ImageReference } from '@/types/models'
 import { v4 as uuidv4 } from 'uuid'
-import { canReadObservation, canEditObservation, canDeleteObservation, canPublishObservation } from '../rbac'
-import { Role } from '@/types/rbac'
+import {
+  getNextObservationRevisionId,
+  getPublishedObservationRevision as getPublishedObservationRevisionInternal,
+  getLatestObservationRevision as getLatestObservationRevisionInternal,
+  publishObservationRevision as publishObservationRevisionInternal,
+  submitObservationForReview as submitObservationForReviewInternal,
+  deleteAllObservationRevisions,
+} from './revision-simple'
 
 export interface CreateObservationInput {
   description?: string
@@ -12,7 +18,7 @@ export interface CreateObservationInput {
   }
   imageIds?: ImageReference[]
   owner: string
-  autoPublish?: boolean // For validated users
+  autoPublish?: boolean
 }
 
 export interface UpdateObservationInput {
@@ -36,8 +42,9 @@ export async function createObservation(
   const observationId = uuidv4()
 
   const revision: ObservationRevisionDocument = {
-    revision_id: 0,
+    id: observationId,
     observation_id: observationId,
+    revision_id: 0,
     description: input.description,
     location: input.location ? {
       type: 'Point',
@@ -68,7 +75,7 @@ export async function createObservationRevision(
   const collection = await getObservationRevisionsCollection()
 
   // Get the current published revision to use as base
-  const currentRevision = await getPublishedObservationRevision(observationId)
+  const currentRevision = await getPublishedObservationRevisionInternal(collection, observationId)
   if (!currentRevision) {
     throw new Error('Observation not found')
   }
@@ -79,11 +86,12 @@ export async function createObservationRevision(
   }
 
   const now = new Date()
-  const nextRevisionId = await getNextObservationRevisionId(observationId)
+  const nextRevisionId = await getNextObservationRevisionId(collection, observationId)
 
   const revision: ObservationRevisionDocument = {
-    revision_id: nextRevisionId,
+    id: observationId,
     observation_id: observationId,
+    revision_id: nextRevisionId,
     description: input.description ?? currentRevision.description,
     location: input.location ? {
       type: 'Point',
@@ -95,7 +103,7 @@ export async function createObservationRevision(
     revision_created_at: now,
     revision_updated_at: now,
     published: false,
-    submitted: false, // Will be set to true when submitted for review
+    submitted: false,
     owner,
   }
 
@@ -108,12 +116,9 @@ export async function createObservationRevision(
  */
 export async function getPublishedObservationRevision(
   observationId: string
-): Promise<ObservationRevisionDocument | null> {
+) {
   const collection = await getObservationRevisionsCollection()
-  return await collection.findOne({
-    observation_id: observationId,
-    published: true,
-  })
+  return await getPublishedObservationRevisionInternal(collection, observationId)
 }
 
 /**
@@ -121,15 +126,9 @@ export async function getPublishedObservationRevision(
  */
 export async function getLatestObservationRevision(
   observationId: string
-): Promise<ObservationRevisionDocument | null> {
+) {
   const collection = await getObservationRevisionsCollection()
-  const revisions = await collection
-    .find({ observation_id: observationId })
-    .sort({ revision_id: -1 })
-    .limit(1)
-    .toArray()
-
-  return revisions.length > 0 ? revisions[0] : null
+  return await getLatestObservationRevisionInternal(collection, observationId)
 }
 
 /**
@@ -146,7 +145,7 @@ export async function getPublishedObservations(
       maxLng: number
     }
   }
-): Promise<ObservationRevisionDocument[]> {
+) {
   const collection = await getObservationRevisionsCollection()
 
   let query: any = { published: true }
@@ -183,7 +182,7 @@ export async function getPublishedObservations(
 export async function getObservationsByOwner(
   owner: string,
   includeUnpublished = false
-): Promise<ObservationRevisionDocument[]> {
+) {
   const collection = await getObservationRevisionsCollection()
 
   const query: any = { owner }
@@ -203,18 +202,7 @@ export async function publishObservationRevision(
   revisionId: number
 ): Promise<void> {
   const collection = await getObservationRevisionsCollection()
-
-  // Unpublish all other revisions
-  await collection.updateMany(
-    { observation_id: observationId, published: true },
-    { $set: { published: false, updated_at: new Date() } }
-  )
-
-  // Publish the specified revision
-  await collection.updateOne(
-    { observation_id: observationId, revision_id: revisionId },
-    { $set: { published: true, submitted: true, updated_at: new Date() } }
-  )
+  await publishObservationRevisionInternal(collection, observationId, revisionId)
 }
 
 /**
@@ -225,19 +213,13 @@ export async function submitObservationForReview(
   revisionId: number
 ): Promise<void> {
   const collection = await getObservationRevisionsCollection()
-
-  await collection.updateOne(
-    { observation_id: observationId, revision_id: revisionId },
-    { $set: { submitted: true, updated_at: new Date() } }
-  )
+  await submitObservationForReviewInternal(collection, observationId, revisionId)
 }
 
 /**
- * Delete an observation (mark all revisions as deleted or actually delete)
+ * Delete an observation (all revisions)
  */
 export async function deleteObservation(observationId: string): Promise<void> {
   const collection = await getObservationRevisionsCollection()
-
-  // Actually delete all revisions
-  await collection.deleteMany({ observation_id: observationId })
+  await deleteAllObservationRevisions(collection, observationId)
 }

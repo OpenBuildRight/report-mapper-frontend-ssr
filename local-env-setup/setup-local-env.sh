@@ -63,6 +63,17 @@ BACKEND_API_URL=http://localhost:8080
 
 # MongoDB Configuration
 MONGODB_URI=mongodb://reportmapper:reportmapper_dev_password@localhost:27017/reportmapper?authSource=admin
+MONGODB_DATABASE=reportmapper
+
+# MinIO Configuration
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minio_root_user
+MINIO_SECRET_KEY=minio_root_password
+MINIO_BUCKET=report-mapper-images
+MINIO_USE_SSL=false
+
+# Root User Configuration (for bootstrapping)
+ROOT_USER_EMAIL=admin@example.com
 EOF
 
 echo ""
@@ -80,8 +91,18 @@ echo "   MongoDB Database: reportmapper"
 echo "   MongoDB Admin: reportmapper / reportmapper_dev_password"
 echo "   Mongo Express UI: http://localhost:8081"
 echo ""
+echo "   MinIO API: http://localhost:9000"
+echo "   MinIO Console: http://localhost:9001"
+echo "   MinIO Credentials: minio_root_user / minio_root_password"
+echo "   Bucket: report-mapper-images"
+echo ""
 echo "🎯 Next steps:"
-echo "   1. cd .."
-echo "   2. npm run dev"
-echo "   3. Visit http://localhost:3000"
+echo "   1. Create MinIO bucket (run once):"
+echo "      - Visit http://localhost:9001"
+echo "      - Login with minio_root_user / minio_root_password"
+echo "      - Create bucket named 'report-mapper-images'"
+echo "      - Set bucket policy to public (for development)"
+echo "   2. cd .."
+echo "   3. npm run dev"
+echo "   4. Visit http://localhost:3000"
 echo ""

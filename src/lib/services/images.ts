@@ -1,9 +1,17 @@
-import { getImageRevisionsCollection, getNextImageRevisionId } from '../db'
+import { getImageRevisionsCollection } from '../db'
 import { ImageRevisionDocument } from '@/types/models'
 import { v4 as uuidv4 } from 'uuid'
+import {
+  getNextImageRevisionId,
+  getPublishedImageRevision as getPublishedImageRevisionInternal,
+  getImageRevision as getImageRevisionInternal,
+  publishImageRevision as publishImageRevisionInternal,
+  submitImageForReview as submitImageForReviewInternal,
+  deleteAllImageRevisions,
+} from './revision-simple'
 
 export interface CreateImageInput {
-  imageKey: string // Path in object store
+  imageKey: string
   description?: string
   location?: {
     latitude: number
@@ -36,8 +44,8 @@ export async function createImage(
   const imageId = uuidv4()
 
   const revision: ImageRevisionDocument = {
-    revision_id: 0,
     id: imageId,
+    revision_id: 0,
     image_key: input.imageKey,
     description: input.description,
     image_metadata_location: input.location ? {
@@ -68,7 +76,7 @@ export async function createImageRevision(
   const collection = await getImageRevisionsCollection()
 
   // Get the current published revision
-  const currentRevision = await getPublishedImageRevision(imageId)
+  const currentRevision = await getPublishedImageRevisionInternal(collection, imageId)
   if (!currentRevision) {
     throw new Error('Image not found')
   }
@@ -79,12 +87,12 @@ export async function createImageRevision(
   }
 
   const now = new Date()
-  const nextRevisionId = await getNextImageRevisionId(imageId)
+  const nextRevisionId = await getNextImageRevisionId(collection, imageId)
 
   const revision: ImageRevisionDocument = {
-    revision_id: nextRevisionId,
     id: imageId,
-    image_key: currentRevision.image_key, // Image file itself doesn't change
+    revision_id: nextRevisionId,
+    image_key: currentRevision.image_key,
     description: input.description ?? currentRevision.description,
     image_metadata_location: input.location ? {
       type: 'Point',
@@ -108,12 +116,9 @@ export async function createImageRevision(
  */
 export async function getPublishedImageRevision(
   imageId: string
-): Promise<ImageRevisionDocument | null> {
+) {
   const collection = await getImageRevisionsCollection()
-  return await collection.findOne({
-    id: imageId,
-    published: true,
-  })
+  return await getPublishedImageRevisionInternal(collection, imageId)
 }
 
 /**
@@ -122,12 +127,9 @@ export async function getPublishedImageRevision(
 export async function getImageRevision(
   imageId: string,
   revisionId: number
-): Promise<ImageRevisionDocument | null> {
+) {
   const collection = await getImageRevisionsCollection()
-  return await collection.findOne({
-    id: imageId,
-    revision_id: revisionId,
-  })
+  return await getImageRevisionInternal(collection, imageId, revisionId)
 }
 
 /**
@@ -151,18 +153,7 @@ export async function publishImageRevision(
   revisionId: number
 ): Promise<void> {
   const collection = await getImageRevisionsCollection()
-
-  // Unpublish all other revisions
-  await collection.updateMany(
-    { id: imageId, published: true },
-    { $set: { published: false, updated_at: new Date() } }
-  )
-
-  // Publish the specified revision
-  await collection.updateOne(
-    { id: imageId, revision_id: revisionId },
-    { $set: { published: true, submitted: true, updated_at: new Date() } }
-  )
+  await publishImageRevisionInternal(collection, imageId, revisionId)
 }
 
 /**
@@ -173,11 +164,7 @@ export async function submitImageForReview(
   revisionId: number
 ): Promise<void> {
   const collection = await getImageRevisionsCollection()
-
-  await collection.updateOne(
-    { id: imageId, revision_id: revisionId },
-    { $set: { submitted: true, updated_at: new Date() } }
-  )
+  await submitImageForReviewInternal(collection, imageId, revisionId)
 }
 
 /**
@@ -185,5 +172,5 @@ export async function submitImageForReview(
  */
 export async function deleteImage(imageId: string): Promise<void> {
   const collection = await getImageRevisionsCollection()
-  await collection.deleteMany({ id: imageId })
+  await deleteAllImageRevisions(collection, imageId)
 }

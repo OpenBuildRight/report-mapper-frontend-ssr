@@ -69,30 +69,5 @@ export async function initializeDatabase() {
   console.log('Database indexes initialized')
 }
 
-/**
- * Get next revision ID for an observation
- */
-export async function getNextObservationRevisionId(observationId: string): Promise<number> {
-  const collection = await getObservationRevisionsCollection()
-  const lastRevision = await collection
-    .find({ observation_id: observationId })
-    .sort({ revision_id: -1 })
-    .limit(1)
-    .toArray()
-
-  return lastRevision.length > 0 ? lastRevision[0].revision_id + 1 : 0
-}
-
-/**
- * Get next revision ID for an image
- */
-export async function getNextImageRevisionId(imageId: string): Promise<number> {
-  const collection = await getImageRevisionsCollection()
-  const lastRevision = await collection
-    .find({ id: imageId })
-    .sort({ revision_id: -1 })
-    .limit(1)
-    .toArray()
-
-  return lastRevision.length > 0 ? lastRevision[0].revision_id + 1 : 0
-}
+// Revision-specific functions have been moved to src/lib/services/revision.ts
+// for DRY implementation across all revisioned entities

@@ -1,11 +1,13 @@
 import { ObjectId } from 'mongodb'
+import { BaseRevision } from './revision'
 
 // Database models matching the requirements
 
-export interface ImageRevisionDocument {
+/**
+ * Image Revision - version controlled image entity
+ */
+export interface ImageRevisionDocument extends BaseRevision {
   _id?: ObjectId
-  revision_id: number // Auto increments from 0 for each image
-  id: string // UUID of image
   image_key: string // Path to object store location
   description?: string
   image_metadata_location?: {
@@ -13,12 +15,6 @@ export interface ImageRevisionDocument {
     coordinates: [number, number] // [longitude, latitude]
   }
   image_metadata_created_at?: Date
-  updated_at: Date
-  created_at: Date
-  revision_created_at: Date
-  published: boolean
-  submitted: boolean
-  owner: string // user_id
 }
 
 export interface ImageReference {
@@ -26,23 +22,19 @@ export interface ImageReference {
   revision_id: number
 }
 
-export interface ObservationRevisionDocument {
+/**
+ * Observation Revision - version controlled observation entity
+ */
+export interface ObservationRevisionDocument extends BaseRevision {
   _id?: ObjectId
-  revision_id: number // Auto increments from 0 for each observation
-  observation_id: string // UUID of observation
+  observation_id: string // UUID of observation (alias for 'id' field for clarity)
   description?: string
   location?: {
     type: 'Point'
     coordinates: [number, number] // [longitude, latitude]
   }
   image_ids?: ImageReference[]
-  updated_at: Date
-  created_at: Date
-  revision_created_at: Date
   revision_updated_at: Date
-  published: boolean
-  submitted: boolean
-  owner: string // user_id
 }
 
 export interface UserDocument {
