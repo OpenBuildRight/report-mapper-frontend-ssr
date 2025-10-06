@@ -5,7 +5,7 @@ import UserProfile from './UserProfile'
 
 export default function Navbar() {
   return (
-    <nav className="bg-gray-800 text-white shadow-lg">
+    <nav className="bg-gray-800 text-white shadow-lg relative z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
@@ -33,7 +33,7 @@ export default function Navbar() {
               </Link>
             </div>
           </div>
-          <div>
+          <div className="relative z-[60]">
             <UserProfile />
           </div>
         </div>

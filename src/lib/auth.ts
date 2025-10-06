@@ -3,6 +3,9 @@ import KeycloakProvider from "next-auth/providers/keycloak"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import { config } from "@/config/env"
 import clientPromise from "@/lib/mongodb"
+import { getUserById } from "@/lib/users"
+import { getAllRoles } from "@/lib/rbac"
+import { Role } from "@/types/rbac"
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
@@ -22,15 +25,15 @@ export const authOptions: NextAuthOptions = {
       // Add user id to session
       if (session.user) {
         session.user.id = user.id
-      }
 
-      // Get the account to retrieve the access token
-      const account = await clientPromise
-        .then(client => client.db())
-        .then(db => db.collection('accounts').findOne({ userId: user.id }))
-
-      if (account) {
-        session.accessToken = account.access_token as string
+        // Add roles to session to avoid extra DB queries
+        const userDoc = await getUserById(user.id)
+        if (userDoc) {
+          const userRoles = userDoc.roles as Role[]
+          session.user.roles = getAllRoles(userRoles, true)
+        } else {
+          session.user.roles = [Role.PUBLIC]
+        }
       }
 
       return session

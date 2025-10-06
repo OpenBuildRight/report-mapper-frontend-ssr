@@ -35,7 +35,7 @@ export default function UserProfile() {
     localStorage.clear()
     sessionStorage.clear()
 
-    // Sign out and redirect to home
+    // Sign out from NextAuth - this clears the session from MongoDB and the session cookie
     await signOut({ callbackUrl: '/' })
   }
 
@@ -61,7 +61,7 @@ export default function UserProfile() {
       </Button>
 
       {showDetails && (
-        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-lg z-[100] border border-gray-700">
+        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-xl z-[10000] border border-gray-700">
           <div className="p-4">
             <h3 className="text-lg font-bold text-gray-100 mb-3">Profile Information</h3>
 

@@ -25,7 +25,8 @@ export async function getAuthContext(): Promise<AuthContext> {
   }
 
   const userId = session.user.id
-  const roles = await getUserRoles(userId)
+  // Use roles from session (cached) instead of querying DB
+  const roles = session.user.roles || [Role.PUBLIC]
 
   return {
     userId,
