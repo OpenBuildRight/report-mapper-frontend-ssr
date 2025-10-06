@@ -1,0 +1,631 @@
+openapi: 3.0.0
+info:
+  title: Report Mapper API
+  version: 1.0.0
+  description: API for managing wildlife observation reports with geospatial data
+  contact:
+    name: Report Mapper Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://your-production-domain.com/api
+    description: Production server
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: ${KEYCLOAK_ISSUER}/protocol/openid-connect/auth
+          tokenUrl: ${KEYCLOAK_ISSUER}/protocol/openid-connect/token
+          scopes:
+            openid: OpenID Connect scope
+            profile: User profile information
+            email: User email
+      description: OAuth2 authentication via Keycloak
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth2 Bearer token from Keycloak (for direct API access)
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: Session cookie (automatically set by browser)
+
+  schemas:
+    Observation:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique observation identifier
+        revisionId:
+          type: integer
+          description: Revision number
+        description:
+          type: string
+          description: Observation description
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+        imageIds:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              image_key:
+                type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        published:
+          type: boolean
+        submitted:
+          type: boolean
+        owner:
+          type: string
+        canEdit:
+          type: boolean
+        canDelete:
+          type: boolean
+        canPublish:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+
+security:
+  - oauth2: [openid, profile, email]
+  - bearerAuth: []
+  - cookieAuth: []
+
+paths:
+  /observations:
+    get:
+      summary: List observations with flexible filtering
+      description: |
+        Returns observations filtered by various optional parameters. Access control is automatically applied based on user permissions.
+
+        Common use cases:
+        - Get pending observations for review: `?submitted=true&published=false`
+        - Get user's own observations: `?owner=user@example.com`
+        - Get observations near a location: `?lat=40.7128&lng=-74.0060&maxDistance=5000`
+      tags:
+        - Observations
+      security:
+        - {}
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        # Ownership & permissions
+        - name: owner
+          in: query
+          schema:
+            type: string
+          description: Filter by observation owner (user ID or email)
+        - name: published
+          in: query
+          schema:
+            type: boolean
+          description: Filter by published status
+        - name: submitted
+          in: query
+          schema:
+            type: boolean
+          description: Filter by submitted status
+
+        # Revision specific
+        - name: revisionId
+          in: query
+          schema:
+            type: integer
+          description: Filter by specific revision ID
+        - name: latestOnly
+          in: query
+          schema:
+            type: boolean
+          description: Return only latest revisions
+
+        # Geospatial - near point
+        - name: lat
+          in: query
+          schema:
+            type: number
+          description: Latitude for proximity search
+        - name: lng
+          in: query
+          schema:
+            type: number
+          description: Longitude for proximity search
+        - name: maxDistance
+          in: query
+          schema:
+            type: number
+          description: Maximum distance in meters (default 10000)
+
+        # Geospatial - bounding box
+        - name: minLat
+          in: query
+          schema:
+            type: number
+          description: Minimum latitude for bounding box
+        - name: maxLat
+          in: query
+          schema:
+            type: number
+          description: Maximum latitude for bounding box
+        - name: minLng
+          in: query
+          schema:
+            type: number
+          description: Minimum longitude for bounding box
+        - name: maxLng
+          in: query
+          schema:
+            type: number
+          description: Maximum longitude for bounding box
+
+        # Pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            maximum: 1000
+          description: Maximum number of results (default 100, max 1000)
+        - name: skip
+          in: query
+          schema:
+            type: integer
+          description: Number of results to skip
+
+        # Sorting
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [created, updated, revisionCreated]
+          description: Field to sort by
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Sort order (default desc)
+
+      responses:
+        '200':
+          description: List of observations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  observations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Observation'
+                  total:
+                    type: integer
+                    description: Total count of observations matching filters
+                  count:
+                    type: integer
+                    description: Count of observations returned in this response
+
+    post:
+      summary: Create a new observation (first revision)
+      description: |
+        Create a completely new observation with no previous revisions.
+        This creates revision 0 with all properties set by the creator.
+
+        **Access Control**: Any authenticated user can create a new observation.
+
+        **All properties are set on creation:**
+        - observation_id (auto-generated UUID)
+        - created_at (set to current time)
+        - owner (set to authenticated user)
+        - description, location, imageIds (from request body)
+      tags:
+        - Observations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                imageIds:
+                  type: array
+                  items:
+                    type: string
+                autoPublish:
+                  type: boolean
+                  description: Auto-publish if user has PUBLISH_OWN_OBSERVATIONS permission
+                submit:
+                  type: boolean
+                  description: Submit for review
+      responses:
+        '201':
+          description: Observation created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  revisionId:
+                    type: integer
+                  published:
+                    type: boolean
+                  submitted:
+                    type: boolean
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /observations/{id}:
+    get:
+      summary: Get all revisions for an observation
+      description: Returns all revisions of an observation that the user has permission to view
+      tags:
+        - Observations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of observation revisions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  observationId:
+                    type: string
+                  revisions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Observation'
+                  total:
+                    type: integer
+        '404':
+          description: Observation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+  /observations/{id}/revisions:
+    post:
+      summary: Create a new revision of an existing observation
+      description: |
+        Create a new revision from an existing observation.
+
+        **Access Control**: Only the owner with edit permission can create a revision.
+
+        **Immutable Properties** (copied from base observation, cannot be changed):
+        - observation_id (stays the same across all revisions)
+        - created_at (original creation date)
+        - owner (ownership cannot be transferred via revisions)
+
+        **Mutable Properties** (can be changed in the new revision):
+        - description
+        - location
+        - imageIds
+        - published/submitted status
+      tags:
+        - Observations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The observation ID to create a revision for
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                imageIds:
+                  type: array
+                  items:
+                    type: string
+                publish:
+                  type: boolean
+                  description: Auto-publish the new revision if user has permission
+                submit:
+                  type: boolean
+                  description: Submit the new revision for review
+      responses:
+        '201':
+          description: New revision created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  revisionId:
+                    type: integer
+                  published:
+                    type: boolean
+                  submitted:
+                    type: boolean
+                  message:
+                    type: string
+                  immutableProperties:
+                    type: object
+                    properties:
+                      observationId:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                      owner:
+                        type: string
+                  mutableProperties:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                      location:
+                        type: object
+                      imageIds:
+                        type: array
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden - only owner with edit permission can create revisions
+        '404':
+          description: Base observation not found
+
+  /observations/{id}/{revisionId}:
+    get:
+      summary: Get a specific revision of an observation
+      description: Returns a specific revision by ID
+      tags:
+        - Observations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Observation revision details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Observation'
+        '404':
+          description: Observation revision not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update a specific revision
+      description: Update the metadata of a specific revision
+      tags:
+        - Observations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                imageIds:
+                  type: array
+                  items:
+                    type: string
+                publish:
+                  type: boolean
+                  description: Optionally publish after update
+                submit:
+                  type: boolean
+                  description: Optionally submit for review after update
+      responses:
+        '200':
+          description: Revision updated
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden
+        '404':
+          description: Revision not found
+
+    delete:
+      summary: Delete a specific revision
+      description: Delete a specific revision (requires appropriate permissions)
+      tags:
+        - Observations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Revision deleted
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden
+        '404':
+          description: Revision not found
+
+    patch:
+      summary: Publish or submit a specific revision
+      description: Change the status of a specific revision
+      tags:
+        - Observations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: revisionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [publish, submit]
+                  description: Action to perform on the revision
+      responses:
+        '200':
+          description: Action completed successfully
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden
+        '404':
+          description: Revision not found
+
+  /images:
+    post:
+      summary: Upload an image
+      description: Upload an image for observations
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Image uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  image_key:
+                    type: string
+        '401':
+          description: Authentication required
+
+  /images/{id}:
+    get:
+      summary: Get image metadata
+      description: Get metadata for a specific image
+      tags:
+        - Images
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image metadata
+        '404':
+          description: Image not found
+
+tags:
+  - name: Observations
+    description: Wildlife observation endpoints
+  - name: Images
+    description: Image management endpoints

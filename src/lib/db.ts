@@ -62,12 +62,26 @@ export async function initializeDatabase() {
     await db.collection(COLLECTIONS.USERS).createIndex({ email: 1 }, { unique: true })
 
     // Observation revisions indexes
-    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ observation_id: 1, revision_id: 1 }, { unique: true })
+    // Unique constraint - must be able to uniquely identify by observation_id + revision_id
+    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex(
+      { observation_id: 1, revision_id: 1 },
+      { unique: true }
+    )
+
+    // Common query patterns
     await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ observation_id: 1, published: 1 })
-    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ owner: 1 })
+    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ owner: 1, published: 1 })
+    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ owner: 1, submitted: 1 })
     await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ published: 1 })
     await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ submitted: 1, published: 1 })
-    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ location: '2dsphere' }) // Geospatial index
+
+    // Geospatial index for proximity and bounding box queries
+    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ location: '2dsphere' })
+
+    // Compound indexes for common filter combinations
+    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ published: 1, revision_created_at: -1 })
+    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ submitted: 1, published: 1, revision_created_at: -1 })
+    await db.collection(COLLECTIONS.OBSERVATION_REVISIONS).createIndex({ owner: 1, published: 1, revision_created_at: -1 })
 
     // Image revisions indexes
     await db.collection(COLLECTIONS.IMAGE_REVISIONS).createIndex({ id: 1, revision_id: 1 }, { unique: true })

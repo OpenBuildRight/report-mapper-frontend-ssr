@@ -132,7 +132,63 @@ export async function getLatestObservationRevision(
 }
 
 /**
- * Get all published observations
+ * Get all revisions for an observation
+ */
+export async function getObservationRevisions(
+  observationId: string
+) {
+  const collection = await getObservationRevisionsCollection()
+  return await collection
+    .find({ observation_id: observationId })
+    .sort({ revision_id: -1 })
+    .toArray()
+}
+
+/**
+ * Get specific revision of an observation
+ */
+export async function getObservationRevision(
+  observationId: string,
+  revisionId: number
+) {
+  const collection = await getObservationRevisionsCollection()
+  return await collection.findOne({
+    observation_id: observationId,
+    revision_id: revisionId,
+  })
+}
+
+/**
+ * Get observations with flexible filtering
+ */
+export async function getObservationsFiltered(
+  filters: import('./observation-filters').ObservationFilters,
+  context: import('./observation-filters').FilterContext
+) {
+  const { buildObservationQuery, buildSortCriteria } = await import('./observation-filters')
+  const collection = await getObservationRevisionsCollection()
+
+  const query = buildObservationQuery(filters, context)
+  const sort = buildSortCriteria(filters)
+
+  let cursor = collection.find(query).sort(sort)
+
+  if (filters.skip) {
+    cursor = cursor.skip(filters.skip)
+  }
+
+  if (filters.limit) {
+    cursor = cursor.limit(filters.limit)
+  }
+
+  const results = await cursor.toArray()
+  const total = await collection.countDocuments(query)
+
+  return { results, total, query }
+}
+
+/**
+ * Get all published observations (legacy - kept for backwards compatibility)
  */
 export async function getPublishedObservations(
   filter?: {

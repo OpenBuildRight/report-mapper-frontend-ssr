@@ -10,7 +10,7 @@ import Button from '@/components/Button'
 async function getPendingObservations() {
   try {
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const response = await fetch(`${baseUrl}/api/observations/pending`, {
+    const response = await fetch(`${baseUrl}/api/observations?submitted=true&published=false&sortBy=revisionCreated&sortOrder=desc`, {
       cache: 'no-store',
     })
 

@@ -1,52 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, requireAuth, requirePermission, handleAuthError } from '@/lib/middleware/auth'
-import { createObservation, getPublishedObservations, getObservationsByOwner } from '@/lib/services/observations'
+import { createObservation, getObservationsFiltered } from '@/lib/services/observations'
+import { parseFiltersFromSearchParams } from '@/lib/services/observation-filters'
 import { Permission } from '@/types/rbac'
 import { hasPermission } from '@/lib/rbac'
+import { canEditObservation, canDeleteObservation, canPublishObservation } from '@/lib/rbac'
 
 /**
  * GET /api/observations
- * Get observations (published for public, own observations for authenticated users)
+ * Get observations with flexible filtering
  */
 export async function GET(request: NextRequest) {
   try {
-    const context = await getAuthContext()
+    const context = await getAuthContext(request)
     const { searchParams } = new URL(request.url)
 
-    const limit = parseInt(searchParams.get('limit') || '100')
-    const skip = parseInt(searchParams.get('skip') || '0')
+    // Parse filters from search params
+    const filters = parseFiltersFromSearchParams(searchParams)
 
-    // Bounding box filter (optional)
-    const minLat = searchParams.get('minLat')
-    const maxLat = searchParams.get('maxLat')
-    const minLng = searchParams.get('minLng')
-    const maxLng = searchParams.get('maxLng')
-
-    let boundingBox: any = undefined
-    if (minLat && maxLat && minLng && maxLng) {
-      boundingBox = {
-        minLat: parseFloat(minLat),
-        maxLat: parseFloat(maxLat),
-        minLng: parseFloat(minLng),
-        maxLng: parseFloat(maxLng),
-      }
-    }
-
-    // Get observations based on permissions
-    let observations
-
-    if (searchParams.get('my') === 'true' && context.isAuthenticated) {
-      // Get user's own observations
-      const includeUnpublished = hasPermission(context.roles, Permission.READ_OWN_OBSERVATIONS)
-      observations = await getObservationsByOwner(context.userId!, includeUnpublished)
-    } else {
-      // Get published observations (anyone can read)
-      observations = await getPublishedObservations({
-        limit,
-        skip,
-        boundingBox,
-      })
-    }
+    // Get observations using filter builder
+    const { results: observations, total } = await getObservationsFiltered(filters, {
+      userId: context.userId,
+      roles: context.roles,
+    })
 
     // Convert to API format
     const apiObservations = observations.map(obs => ({
@@ -59,16 +35,20 @@ export async function GET(request: NextRequest) {
       } : undefined,
       imageIds: obs.image_ids || [],
       createdAt: obs.created_at.toISOString(),
+      revisionCreatedAt: obs.revision_created_at.toISOString(),
       updatedAt: obs.updated_at.toISOString(),
       published: obs.published,
       submitted: obs.submitted,
       owner: obs.owner,
-      canEdit: context.userId === obs.owner,
+      canEdit: canEditObservation(context.roles, obs, context.userId),
+      canDelete: canDeleteObservation(context.roles, obs, context.userId),
+      canPublish: canPublishObservation(context.roles, obs, context.userId),
     }))
 
     return NextResponse.json({
       observations: apiObservations,
-      total: apiObservations.length,
+      total,
+      count: apiObservations.length,
     })
   } catch (error) {
     return handleAuthError(error)

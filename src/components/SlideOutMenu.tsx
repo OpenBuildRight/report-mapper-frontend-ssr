@@ -80,6 +80,15 @@ export default function SlideOutMenu({ isOpen, onClose }: SlideOutMenuProps) {
               )}
             </>
           )}
+          <li className="border-t border-gray-700 mt-2 pt-2">
+            <Link
+              href="/api-docs"
+              onClick={onClose}
+              className="block px-6 py-3 hover:bg-gray-700 transition"
+            >
+              API Documentation
+            </Link>
+          </li>
         </ul>
       </div>
     </>

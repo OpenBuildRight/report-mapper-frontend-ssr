@@ -32,11 +32,17 @@ resource "keycloak_openid_client" "openid_client" {
   valid_redirect_uris = [
     "http://localhost:3000/api/auth/callback/keycloak",
     "http://127.0.0.1:3000/api/auth/callback/keycloak",
+    "http://localhost:3000/oauth2-redirect.html",
+    "http://127.0.0.1:3000/oauth2-redirect.html",
+    "http://localhost:3001/oauth2-redirect.html",
+    "http://127.0.0.1:3001/oauth2-redirect.html",
   ]
 
   web_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
   ]
 
   login_theme = "keycloak"
