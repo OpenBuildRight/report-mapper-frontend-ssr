@@ -3,6 +3,8 @@ import { getAuthContext, requireAuth, handleAuthError } from '@/lib/middleware/a
 import { createObservation, getObservationsFiltered } from '@/lib/services/observations'
 import { parseFiltersFromSearchParams } from '@/lib/services/observation-filters'
 import { canEditObservation, canDeleteObservation, canPublishObservation } from '@/lib/rbac'
+import { validateBody } from '@/lib/validation/validate'
+import { createObservationSchema } from '@/lib/validation/schemas'
 
 /**
  * GET /api/observations
@@ -59,44 +61,16 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const context = await requireAuth()
-    const contentType = request.headers.get('content-type')
+    const context = await requireAuth(request)
+    const body = await request.json()
 
-    let description: string | undefined
-    let location: { latitude: number; longitude: number } | undefined
-    let imageIds: any[] | undefined
-
-    // Handle both JSON and FormData
-    if (contentType?.includes('application/json')) {
-      const body = await request.json()
-      description = body.description
-      location = body.location
-      imageIds = body.imageIds
-    } else if (contentType?.includes('multipart/form-data')) {
-      const formData = await request.formData()
-
-      description = formData.get('description') as string
-
-      const latitude = formData.get('latitude') as string
-      const longitude = formData.get('longitude') as string
-
-      if (latitude && longitude) {
-        location = {
-          latitude: parseFloat(latitude),
-          longitude: parseFloat(longitude)
-        }
-      }
-
-      // For now, we'll create a simple observation without images
-      // In the future, files should be uploaded to /api/images first, then referenced here
-      imageIds = []
-
-      // TODO: Handle photo uploads - for now we're just ignoring them
-      // The proper flow is:
-      // 1. Client uploads photos to /api/images
-      // 2. Gets back image IDs
-      // 3. Submits observation with those image IDs
+    // Validate request body
+    const validation = await validateBody(body, createObservationSchema)
+    if (!validation.success) {
+      return validation.response
     }
+
+    const { description, location, imageIds } = validation.data
 
     const observation = await createObservation({
       description,

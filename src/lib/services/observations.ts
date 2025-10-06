@@ -300,6 +300,60 @@ export async function submitObservationForReview(
 }
 
 /**
+ * Update observation revision metadata
+ */
+export async function updateObservationRevision(
+  observationId: string,
+  revisionId: number,
+  input: {
+    description?: string
+    location?: { latitude: number; longitude: number }
+    imageIds?: Array<{ id: string; revision_id: number }>
+  }
+): Promise<void> {
+  const collection = await getObservationRevisionsCollection()
+
+  const updateFields: any = {
+    updated_at: new Date(),
+    revision_updated_at: new Date(),
+  }
+
+  if (input.description !== undefined) {
+    updateFields.description = input.description
+  }
+
+  if (input.location !== undefined) {
+    updateFields.location = {
+      type: 'Point',
+      coordinates: [input.location.longitude, input.location.latitude],
+    }
+  }
+
+  if (input.imageIds !== undefined) {
+    updateFields.image_ids = input.imageIds
+  }
+
+  await collection.updateOne(
+    { observation_id: observationId, revision_id: revisionId },
+    { $set: updateFields }
+  )
+}
+
+/**
+ * Delete a specific observation revision
+ */
+export async function deleteObservationRevision(
+  observationId: string,
+  revisionId: number
+): Promise<void> {
+  const collection = await getObservationRevisionsCollection()
+  await collection.deleteOne({
+    observation_id: observationId,
+    revision_id: revisionId,
+  })
+}
+
+/**
  * Delete an observation (all revisions)
  */
 export async function deleteObservation(observationId: string): Promise<void> {

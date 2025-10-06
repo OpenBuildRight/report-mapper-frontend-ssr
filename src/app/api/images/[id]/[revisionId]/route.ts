@@ -8,6 +8,8 @@ import {
   submitImageForReview,
 } from '@/lib/services/images'
 import { canReadObservation, canEditObservation, canDeleteObservation, canPublishObservation } from '@/lib/rbac'
+import { validateBody } from '@/lib/validation/validate'
+import { updateImageRevisionSchema, revisionActionSchema } from '@/lib/validation/schemas'
 
 interface RouteParams {
   params: Promise<{
@@ -79,6 +81,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const context = await requireAuth(request)
     const body = await request.json()
 
+    // Validate request body
+    const validation = await validateBody(body, updateImageRevisionSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const { description, location } = validation.data
+
     const revision = await getImageRevision(id, revisionId)
 
     if (!revision) {
@@ -103,8 +113,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-
-    const { description, location } = body
 
     await updateImageRevision(id, revisionId, { description, location })
 
@@ -182,6 +190,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const context = await requireAuth(request)
     const body = await request.json()
 
+    // Validate request body
+    const validation = await validateBody(body, revisionActionSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const { action } = validation.data
+
     const revision = await getImageRevision(id, revisionId)
 
     if (!revision) {
@@ -191,7 +207,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    if (body.action === 'publish') {
+    if (action === 'publish') {
       // Check publish permission
       if (!canPublishObservation(context.roles, revision, context.userId)) {
         return NextResponse.json(
@@ -210,7 +226,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
     }
 
-    if (body.action === 'submit') {
+    if (action === 'submit') {
       // Check edit permission (must be owner)
       if (!canEditObservation(context.roles, revision, context.userId)) {
         return NextResponse.json(

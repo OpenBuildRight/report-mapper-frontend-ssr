@@ -5,6 +5,8 @@ import {
   createImageRevision,
 } from '@/lib/services/images'
 import { canEditObservation } from '@/lib/rbac'
+import { validateBody } from '@/lib/validation/validate'
+import { createImageRevisionSchema } from '@/lib/validation/schemas'
 
 interface RouteParams {
   params: Promise<{
@@ -25,7 +27,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const context = await requireAuth(request)
     const body = await request.json()
 
-    const { description, location } = body
+    // Validate request body
+    const validation = await validateBody(body, createImageRevisionSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const { description, location } = validation.data
 
     // Get the latest revision to check ownership and permissions
     const { getImageRevisions } = await import('@/lib/services/images')

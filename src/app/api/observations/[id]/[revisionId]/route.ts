@@ -4,9 +4,12 @@ import {
   getObservationRevision,
   publishObservationRevision,
   submitObservationForReview,
+  deleteObservationRevision,
+  updateObservationRevision,
 } from '@/lib/services/observations'
-import { getObservationRevisionsCollection } from '@/lib/db'
 import { canReadObservation, canEditObservation, canDeleteObservation, canPublishObservation } from '@/lib/rbac'
+import { validateBody } from '@/lib/validation/validate'
+import { updateObservationRevisionSchema, revisionActionSchema } from '@/lib/validation/schemas'
 
 interface RouteParams {
   params: Promise<{
@@ -91,6 +94,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json()
+
+    // Validate request body
+    const validation = await validateBody(body, updateObservationRevisionSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const { description, location, imageIds } = validation.data
+
     const revision = await getObservationRevision(id, revisionId)
 
     if (!revision) {
@@ -108,35 +120,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Update the revision metadata (description, location, images)
-    const collection = await getObservationRevisionsCollection()
-    const { description, location, imageIds } = body
-
-    const updateFields: any = {
-      updated_at: new Date(),
-      revision_updated_at: new Date(),
-    }
-
-    if (description !== undefined) updateFields.description = description
-    if (location !== undefined) {
-      updateFields.location = {
-        type: 'Point',
-        coordinates: [location.longitude, location.latitude],
-      }
-    }
-    if (imageIds !== undefined) updateFields.image_ids = imageIds
-
-    await collection.updateOne(
-      { observation_id: id, revision_id: revisionId },
-      { $set: updateFields }
-    )
-
-    // Handle publish/submit if requested
-    if (body.publish && canPublishObservation(context.roles, revision, context.userId)) {
-      await publishObservationRevision(id, revisionId)
-    } else if (body.submit) {
-      await submitObservationForReview(id, revisionId)
-    }
+    // Update the revision metadata
+    await updateObservationRevision(id, revisionId, {
+      description,
+      location,
+      imageIds,
+    })
 
     return NextResponse.json({
       id,
@@ -182,11 +171,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    const collection = await getObservationRevisionsCollection()
-    await collection.deleteOne({
-      observation_id: id,
-      revision_id: revisionId,
-    })
+    await deleteObservationRevision(id, revisionId)
 
     return NextResponse.json({
       success: true,
@@ -215,6 +200,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json()
+
+    // Validate request body
+    const validation = await validateBody(body, revisionActionSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const { action } = validation.data
+
     const revision = await getObservationRevision(id, revisionId)
 
     if (!revision) {
@@ -225,7 +219,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // Handle publish action
-    if (body.action === 'publish') {
+    if (action === 'publish') {
       if (!canPublishObservation(context.roles, revision, context.userId)) {
         return NextResponse.json(
           { error: 'Forbidden - cannot publish this revision' },
@@ -244,7 +238,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // Handle submit action
-    if (body.action === 'submit') {
+    if (action === 'submit') {
       if (!canEditObservation(context.roles, revision, context.userId)) {
         return NextResponse.json(
           { error: 'Forbidden - cannot submit this revision' },

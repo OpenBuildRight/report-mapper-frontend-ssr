@@ -7,6 +7,8 @@ import {
   submitObservationForReview,
 } from '@/lib/services/observations'
 import { canEditObservation, canPublishObservation } from '@/lib/rbac'
+import { validateBody } from '@/lib/validation/validate'
+import { createObservationRevisionSchema } from '@/lib/validation/schemas'
 
 interface RouteParams {
   params: Promise<{
@@ -39,6 +41,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const context = await requireAuth(request)
     const body = await request.json()
 
+    // Validate request body
+    const validation = await validateBody(body, createObservationRevisionSchema)
+    if (!validation.success) {
+      return validation.response
+    }
+
+    const { description, location, imageIds } = validation.data
+
     // Get the latest revision to check permissions and copy immutable properties
     const baseRevision = await getLatestObservationRevision(id)
 
@@ -60,30 +70,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           }
         },
         { status: 403 }
-      )
-    }
-
-    const { description, location, imageIds } = body
-
-    // Validate that immutable properties are not being changed
-    if (body.observationId && body.observationId !== id) {
-      return NextResponse.json(
-        { error: 'Cannot change observation ID when creating a revision' },
-        { status: 400 }
-      )
-    }
-
-    if (body.owner && body.owner !== baseRevision.owner) {
-      return NextResponse.json(
-        { error: 'Cannot change ownership when creating a revision' },
-        { status: 400 }
-      )
-    }
-
-    if (body.createdAt) {
-      return NextResponse.json(
-        { error: 'Cannot change original creation date when creating a revision' },
-        { status: 400 }
       )
     }
 

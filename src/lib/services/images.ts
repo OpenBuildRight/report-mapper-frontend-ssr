@@ -190,10 +190,27 @@ export async function deleteImageRevision(
 }
 
 /**
- * Delete an image (all revisions)
+ * Delete an image (all revisions) and remove from MinIO
  */
 export async function deleteImage(imageId: string): Promise<void> {
   const collection = await getImageRevisionsCollection()
+
+  // Get the image to find the image_key for MinIO deletion
+  const image = await collection.findOne({ id: imageId })
+
+  if (image) {
+    // Delete from MinIO
+    try {
+      const { deleteImage: deleteFromMinio } = await import('@/lib/minio')
+      await deleteFromMinio(image.image_key)
+      console.log('Deleted image from MinIO:', image.image_key)
+    } catch (error) {
+      console.error('Failed to delete image from MinIO:', error)
+      // Continue with database deletion even if MinIO fails
+    }
+  }
+
+  // Delete all revisions from database
   await deleteAllImageRevisions(collection, imageId)
 }
 
