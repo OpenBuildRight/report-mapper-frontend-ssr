@@ -76,6 +76,10 @@ export async function initializeDatabase() {
     await db.collection(COLLECTIONS.IMAGE_REVISIONS).createIndex({ image_metadata_location: '2dsphere' }) // Geospatial index
 
     console.log('Database indexes initialized successfully')
+
+    // Bootstrap users after indexes are created
+    const { bootstrapUsers } = await import('./bootstrap')
+    await bootstrapUsers()
   } catch (error) {
     console.error('Error initializing database indexes:', error)
     // Don't throw - allow app to continue even if index creation fails

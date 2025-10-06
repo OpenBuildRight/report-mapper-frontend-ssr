@@ -58,6 +58,9 @@ KEYCLOAK_ISSUER=$KEYCLOAK_ISSUER
 KEYCLOAK_CLIENT_ID=$KEYCLOAK_CLIENT_ID
 KEYCLOAK_CLIENT_SECRET=$KEYCLOAK_CLIENT_SECRET
 
+# Client-side Keycloak config for logout
+NEXT_PUBLIC_KEYCLOAK_ISSUER=$KEYCLOAK_ISSUER
+
 # Backend API Configuration
 BACKEND_API_URL=http://localhost:8080
 
@@ -72,9 +75,44 @@ MINIO_SECRET_KEY=minio_root_password
 MINIO_BUCKET=report-mapper-images
 MINIO_USE_SSL=false
 
-# Root User Configuration (for bootstrapping)
-ROOT_USER_EMAIL=admin@example.com
+# Bootstrap Users Configuration
+BOOTSTRAP_USERS_FILE=./bootstrap-users.yaml
 EOF
+
+# Generate bootstrap users file if it doesn't exist
+BOOTSTRAP_FILE="../bootstrap-users.yaml"
+if [ ! -f "$BOOTSTRAP_FILE" ]; then
+    echo "📄 Generating $BOOTSTRAP_FILE..."
+    cat > "$BOOTSTRAP_FILE" << 'BOOTSTRAP_EOF'
+# Bootstrap Users Configuration
+# Users defined here will be automatically created/updated on app startup
+
+users:
+  # Admin user - has all permissions
+  - email: alice@example.com
+    name: Alice Admin
+    roles:
+      - SECURITY_ADMIN
+      - MODERATOR
+      - VALIDATED_USER
+
+  # Moderator user - can review and manage observations
+  - email: bob@example.com
+    name: Bob Moderator
+    roles:
+      - MODERATOR
+      - VALIDATED_USER
+
+  # Regular validated user
+  - email: charlie@example.com
+    name: Charlie User
+    roles:
+      - VALIDATED_USER
+BOOTSTRAP_EOF
+    echo "✅ Bootstrap users file created"
+else
+    echo "ℹ️  Bootstrap users file already exists, skipping creation"
+fi
 
 echo ""
 echo "✅ Local development environment setup complete!"

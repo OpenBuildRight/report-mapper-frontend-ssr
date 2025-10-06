@@ -52,7 +52,7 @@ export default function Navigation() {
       {/* Menu Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[999]"
+          className="fixed inset-0 bg-black/50 z-[999]"
           onClick={closeMenu}
         />
       )}
