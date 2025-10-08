@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getUserRoles } from '@/lib/users'
 import { Permission, Role } from '@/types/rbac'
 import { hasPermission } from '@/lib/rbac'
 import { extractBearerToken, verifyBearerToken } from './bearer-auth'

@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
-import { getUserRoles } from '@/lib/users'
 import { hasPermission } from '@/lib/rbac'
 import { Permission } from '@/types/rbac'
 import Link from 'next/link'
@@ -35,8 +34,8 @@ export default async function ReviewPage() {
   }
 
   // Check if user has permission to review observations
-  const roles = await getUserRoles(session.user.id)
-  const canReview = hasPermission(roles, Permission.READ_ALL_OBSERVATIONS)
+  // Roles are already populated in the session from user_roles collection
+  const canReview = hasPermission(session.user.roles, Permission.READ_ALL_OBSERVATIONS)
 
   if (!canReview) {
     return (
