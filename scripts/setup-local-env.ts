@@ -163,12 +163,9 @@ MINIO_SECRET_KEY=minio_root_password
 MINIO_BUCKET=report-mapper-images
 MINIO_USE_SSL=false
 
-# Admin User (has all roles/permissions in-memory)
-# This is the UUID from Keycloak that appears in the 'sub' claim
-ADMIN_USER_ID=${adminUserId}
-
-# Dev User ID (for dev initialization)
-DEV_USER_ID=${devUserId}
+# Bootstrap Roles Configuration
+# Pre-assign roles to users on first login based on provider and user ID
+BOOTSTRAP_ROLES='[{"provider":"keycloak","userId":"${adminUserId}","roles":["security-admin","moderator","validated-user"]},{"provider":"keycloak","userId":"${devUserId}","roles":["security-admin","moderator","validated-user"]}]'
 `
 
   writeFileSync(ENV_FILE, envContent, 'utf-8')
@@ -204,7 +201,8 @@ DEV_USER_ID=${devUserId}
   console.log(`      - Create bucket named 'report-mapper-images'`)
   console.log(`      - Set bucket policy to public (for development)`)
   console.log(`   2. Run: ${colors.bright}pnpm run dev${colors.reset}`)
-  console.log(`   3. Visit http://localhost:3000`)
+  console.log(`   3. Visit http://localhost:3000 and login`)
+  console.log(`   4. Users get roles automatically on first login (via BOOTSTRAP_ROLES)`)
   console.log('')
 }
 

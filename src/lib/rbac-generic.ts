@@ -126,11 +126,21 @@ export function getAutomaticRoles(isAuthenticated: boolean): Role[] {
 /**
  * Check if a user is admin user (from environment variables)
  * Admin user has all roles and permissions in-memory
+ *
+ * @deprecated This function is deprecated. Use BOOTSTRAP_ROLES env variable instead.
+ *
+ * Legacy support: ADMIN_USER_ID still works for backward compatibility.
  */
-export function isAdminUser(userId?: string): boolean {
+export function isAdminUser(userId?: string, userEmail?: string): boolean {
   if (!userId) return false
+
+  // Legacy: Check by NextAuth user ID (for backward compatibility)
   const adminUserId = process.env.ADMIN_USER_ID
-  return !!adminUserId && userId === adminUserId
+  if (adminUserId && userId === adminUserId) {
+    return true
+  }
+
+  return false
 }
 
 /**
@@ -144,11 +154,11 @@ export function isRootUser(userId: string): boolean {
 /**
  * Get all roles for a user including automatic roles and admin roles
  */
-export function getAllRoles(userRoles: Role[], isAuthenticated: boolean, userId?: string): Role[] {
+export function getAllRoles(userRoles: Role[], isAuthenticated: boolean, userId?: string, userEmail?: string): Role[] {
   const automaticRoles = getAutomaticRoles(isAuthenticated)
 
   // If user is admin, grant all roles
-  if (isAdminUser(userId)) {
+  if (isAdminUser(userId, userEmail)) {
     return [
       Role.PUBLIC,
       Role.AUTHENTICATED_USER,

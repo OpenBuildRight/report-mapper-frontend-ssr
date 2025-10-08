@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import { jwtVerify, createRemoteJWKSet } from 'jose'
 import { config } from '@/config/env'
-import { getUserByEmail } from '@/lib/users'
+import { getUserRoles } from '@/lib/user-roles'
 import { getAllRoles } from '@/lib/rbac'
 import { Role } from '@/types/rbac'
+import clientPromise from '@/lib/mongodb'
 
 interface BearerAuthContext {
   userId: string
@@ -27,9 +28,9 @@ export async function verifyBearerToken(token: string): Promise<BearerAuthContex
       audience: config.keycloak.clientId,
     })
 
-    // Extract user ID from sub claim (standard JWT claim)
-    const userId = payload.sub as string
-    if (!userId) {
+    // Extract Keycloak user ID from sub claim
+    const keycloakSub = payload.sub as string
+    if (!keycloakSub) {
       console.error('No sub claim in token payload')
       return null
     }
@@ -37,15 +38,26 @@ export async function verifyBearerToken(token: string): Promise<BearerAuthContex
     // Extract email (optional, for display/logging)
     const email = payload.email as string
 
-    // Get user from database (may not exist if admin user)
-    const user = await getUserByEmail(email)
+    // Map Keycloak sub to NextAuth user ID via accounts table
+    const db = (await clientPromise).db()
+    const account = await db.collection('accounts').findOne({
+      provider: 'keycloak',
+      providerAccountId: keycloakSub
+    }) as any
 
-    // Get user roles (admin user gets all roles even without DB record)
-    const userRoles = user ? (user.roles as Role[]) : []
-    const roles = getAllRoles(userRoles, true, userId)
+    if (!account) {
+      console.error(`No NextAuth account found for Keycloak sub: ${keycloakSub}`)
+      return null
+    }
+
+    const nextAuthUserId = account.userId.toString()
+
+    // Get user roles from our user_roles table keyed by NextAuth ID
+    const userRoles = await getUserRoles(nextAuthUserId)
+    const roles = getAllRoles(userRoles, true, nextAuthUserId)
 
     return {
-      userId: userId,
+      userId: nextAuthUserId,
       email: email,
       roles,
       isAuthenticated: true,

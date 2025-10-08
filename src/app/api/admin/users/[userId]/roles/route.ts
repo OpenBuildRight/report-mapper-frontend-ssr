@@ -49,7 +49,7 @@ export async function POST(
 
     if (!result.success) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: result.error.errors },
+        { error: 'Invalid request body', details: result.error },
         { status: 400 }
       )
     }
@@ -79,7 +79,7 @@ export async function DELETE(
 
     if (!result.success) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: result.error.errors },
+        { error: 'Invalid request body', details: result.error },
         { status: 400 }
       )
     }
