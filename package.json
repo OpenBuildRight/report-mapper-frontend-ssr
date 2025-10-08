@@ -9,9 +9,7 @@
   "packageManager": "pnpm@10.15.1",
   "scripts": {
     "setup": "tsx scripts/setup-local-env.ts",
-    "setup-dev-users": "tsx scripts/setup-dev-users.ts",
-    "dev": "concurrently \"next dev --turbopack\" \"npm run setup-dev-users\"",
-    "dev:server-only": "next dev --turbopack",
+    "dev": "tsx scripts/dev.ts",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "biome check",
