@@ -5,19 +5,15 @@
  *
  * This script:
  * 1. Starts the Next.js dev server
- * 2. Waits for it to be ready
- * 3. Runs initialization scripts (setup dev users)
+ * 2. Waits for MongoDB to be available
+ * 3. Sets up dev users with roles directly in the database
  * 4. Keeps the server running
  */
 
 import { spawn } from 'child_process'
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
-
-const ENV_FILE = resolve(__dirname, '../.env.local')
-const API_URL = 'http://localhost:3000'
-const MAX_RETRIES = 30
-const RETRY_DELAY = 2000
+import { getUserByEmail, assignRole } from '../src/lib/users'
+import { Role } from '../src/types/rbac'
+import clientPromise from '../src/lib/mongodb'
 
 // ANSI color codes
 const colors = {
@@ -27,169 +23,61 @@ const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
-  gray: '\x1b[90m',
 }
 
 function log(emoji: string, message: string) {
   console.log(`${emoji} ${message}`)
 }
 
-function loadEnv(): Record<string, string> {
-  try {
-    const envContent = readFileSync(ENV_FILE, 'utf-8')
-    const env: Record<string, string> = {}
+async function waitForMongoDB(): Promise<boolean> {
+  const maxRetries = 10
 
-    for (const line of envContent.split('\n')) {
-      const trimmed = line.trim()
-      if (!trimmed || trimmed.startsWith('#')) continue
-
-      const match = trimmed.match(/^([^=]+)=(.*)$/)
-      if (match) {
-        env[match[1]] = match[2]
-      }
-    }
-
-    return env
-  } catch {
-    return {}
-  }
-}
-
-async function waitForAPI(): Promise<boolean> {
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch(`${API_URL}/api/reference`)
-      if (response.ok) {
-        return true
-      }
+      await clientPromise
+      return true
     } catch {
-      // API not ready yet
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
-
-    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
   }
 
   return false
 }
 
-async function getOAuthToken(
-  keycloakIssuer: string,
-  clientId: string,
-  clientSecret: string,
-  username: string,
-  password: string
-): Promise<string | null> {
-  try {
-    const tokenUrl = `${keycloakIssuer}/protocol/openid-connect/token`
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'password',
-        client_id: clientId,
-        client_secret: clientSecret,
-        username: username,
-        password: password,
-        scope: 'openid profile email',
-      }),
-    })
-
-    if (!response.ok) {
-      return null
-    }
-
-    const data = await response.json()
-    return data.access_token
-  } catch {
-    return null
-  }
-}
-
-async function assignUserRole(
-  token: string,
-  userId: string,
-  role: string
-): Promise<boolean> {
-  try {
-    const response = await fetch(`${API_URL}/api/admin/users/${userId}/roles`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ role }),
-    })
-
-    return response.ok
-  } catch {
-    return false
-  }
-}
-
-function getUserIdFromToken(token: string): string | null {
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return null
-
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
-    return payload.sub
-  } catch {
-    return null
-  }
-}
-
 async function initializeDevUsers() {
   console.log(`\n${colors.cyan}${colors.bright}👥 Initializing development users...${colors.reset}\n`)
 
-  const env = loadEnv()
-  const keycloakIssuer = env.KEYCLOAK_ISSUER || env.NEXT_PUBLIC_KEYCLOAK_ISSUER
-  const clientId = env.KEYCLOAK_CLIENT_ID || env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID
-  const clientSecret = env.KEYCLOAK_CLIENT_SECRET
+  try {
+    // Wait for MongoDB to be available
+    log('⏳', 'Waiting for MongoDB...')
+    const mongoReady = await waitForMongoDB()
+    if (!mongoReady) {
+      console.log(`${colors.yellow}⚠️  MongoDB not ready, skipping user initialization${colors.reset}\n`)
+      return
+    }
+    log('✅', 'MongoDB is ready!')
 
-  if (!keycloakIssuer || !clientId || !clientSecret) {
-    console.log(`${colors.yellow}⚠️  Skipping user initialization: Missing Keycloak configuration${colors.reset}\n`)
-    return
+    // Find alice user by email (created by NextAuth on first login)
+    log('🔍', 'Looking for alice user...')
+    const alice = await getUserByEmail('alice@domain.com')
+
+    if (!alice) {
+      console.log(`${colors.yellow}⚠️  Alice user not found (will be created on first login)${colors.reset}\n`)
+      return
+    }
+
+    // Assign roles to alice
+    log('👤', `Configuring alice (${alice.id})...`)
+    await assignRole(alice.id, Role.VALIDATED_USER)
+    log('✅', `Assigned role: ${Role.VALIDATED_USER}`)
+
+    await assignRole(alice.id, Role.MODERATOR)
+    log('✅', `Assigned role: ${Role.MODERATOR}`)
+
+    console.log(`${colors.green}✅ Development users initialized successfully!${colors.reset}\n`)
+  } catch (error) {
+    console.error(`${colors.red}❌ Failed to initialize dev users: ${error}${colors.reset}\n`)
   }
-
-  // Wait for API to be ready
-  log('⏳', 'Waiting for API to be ready...')
-  const apiReady = await waitForAPI()
-  if (!apiReady) {
-    console.log(`${colors.yellow}⚠️  API not ready, skipping user initialization${colors.reset}\n`)
-    return
-  }
-  log('✅', 'API is ready!')
-
-  // Get admin token
-  log('🔐', 'Authenticating as admin...')
-  const adminToken = await getOAuthToken(keycloakIssuer, clientId, clientSecret, 'admin', 'admin_password')
-  if (!adminToken) {
-    console.log(`${colors.yellow}⚠️  Could not authenticate as admin, skipping user initialization${colors.reset}\n`)
-    return
-  }
-
-  // Get alice's user ID
-  const aliceToken = await getOAuthToken(keycloakIssuer, clientId, clientSecret, 'alice', 'alice_password')
-  if (!aliceToken) {
-    console.log(`${colors.yellow}⚠️  Could not authenticate as alice, skipping user initialization${colors.reset}\n`)
-    return
-  }
-
-  const aliceUserId = getUserIdFromToken(aliceToken)
-  if (!aliceUserId) {
-    console.log(`${colors.yellow}⚠️  Could not get alice user ID, skipping user initialization${colors.reset}\n`)
-    return
-  }
-
-  // Assign roles to alice
-  log('👤', `Configuring alice (${aliceUserId})...`)
-  await assignUserRole(adminToken, aliceUserId, 'validated-user')
-  await assignUserRole(adminToken, aliceUserId, 'moderator')
-
-  console.log(`${colors.green}✅ Development users initialized successfully!${colors.reset}\n`)
 }
 
 async function main() {

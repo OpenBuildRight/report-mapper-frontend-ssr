@@ -53,10 +53,23 @@ function exec(command: string, cwd?: string): string {
   }
 }
 
+function execVerbose(command: string, cwd?: string): void {
+  try {
+    execSync(command, {
+      cwd: cwd || process.cwd(),
+      encoding: 'utf-8',
+      stdio: 'inherit',
+    })
+  } catch (err: any) {
+    error(`Command failed: ${command}\n${err.message}`)
+  }
+}
+
 async function checkKeycloakHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${KEYCLOAK_URL}/health/ready`)
-    return response.ok
+    // Just check if Keycloak responds at all (will get 302 redirect)
+    const response = await fetch(`${KEYCLOAK_URL}/`)
+    return response.status === 302 || response.ok
   } catch {
     return false
   }
@@ -94,15 +107,15 @@ async function main() {
 
   // Start Docker containers
   log('📦', 'Starting Docker containers...')
-  exec('docker compose up -d', SETUP_DIR)
+  execVerbose('docker compose up -d', SETUP_DIR)
 
   // Wait for Keycloak
   await waitForKeycloak()
 
   // Apply Terraform configuration
   log('🔧', 'Applying Terraform configuration...')
-  exec('terraform init -upgrade', SETUP_DIR)
-  exec('terraform apply -auto-approve', SETUP_DIR)
+  execVerbose('terraform init -upgrade', SETUP_DIR)
+  execVerbose('terraform apply -auto-approve', SETUP_DIR)
 
   // Get Terraform outputs
   log('📝', 'Extracting configuration values...')
