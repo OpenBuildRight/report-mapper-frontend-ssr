@@ -124,18 +124,40 @@ export function getAutomaticRoles(isAuthenticated: boolean): Role[] {
 }
 
 /**
- * Check if a user is root user (from environment variables)
+ * Check if a user is admin user (from environment variables)
+ * Admin user has all roles and permissions in-memory
  */
-export function isRootUser(email: string): boolean {
-  const rootUserEmail = process.env.ROOT_USER_EMAIL
-  return !!rootUserEmail && email === rootUserEmail
+export function isAdminUser(userId?: string): boolean {
+  if (!userId) return false
+  const adminUserId = process.env.ADMIN_USER_ID
+  return !!adminUserId && userId === adminUserId
 }
 
 /**
- * Get all roles for a user including automatic roles
+ * Check if a user is root user (from environment variables)
+ * @deprecated Use isAdminUser instead
  */
-export function getAllRoles(userRoles: Role[], isAuthenticated: boolean): Role[] {
+export function isRootUser(userId: string): boolean {
+  return isAdminUser(userId)
+}
+
+/**
+ * Get all roles for a user including automatic roles and admin roles
+ */
+export function getAllRoles(userRoles: Role[], isAuthenticated: boolean, userId?: string): Role[] {
   const automaticRoles = getAutomaticRoles(isAuthenticated)
+
+  // If user is admin, grant all roles
+  if (isAdminUser(userId)) {
+    return [
+      Role.PUBLIC,
+      Role.AUTHENTICATED_USER,
+      Role.VALIDATED_USER,
+      Role.MODERATOR,
+      Role.SECURITY_ADMIN,
+    ]
+  }
+
   const allRoles = new Set([...automaticRoles, ...userRoles])
   return Array.from(allRoles)
 }

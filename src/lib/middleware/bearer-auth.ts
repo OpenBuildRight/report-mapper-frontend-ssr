@@ -27,26 +27,26 @@ export async function verifyBearerToken(token: string): Promise<BearerAuthContex
       audience: config.keycloak.clientId,
     })
 
-    // Extract email from token
+    // Extract user ID from sub claim (standard JWT claim)
+    const userId = payload.sub as string
+    if (!userId) {
+      console.error('No sub claim in token payload')
+      return null
+    }
+
+    // Extract email (optional, for display/logging)
     const email = payload.email as string
-    if (!email) {
-      console.error('No email in token payload')
-      return null
-    }
 
-    // Get user from database
+    // Get user from database (may not exist if admin user)
     const user = await getUserByEmail(email)
-    if (!user) {
-      console.error(`User not found for email: ${email}`)
-      return null
-    }
 
-    // Get user roles
-    const roles = getAllRoles(user.roles as Role[], true)
+    // Get user roles (admin user gets all roles even without DB record)
+    const userRoles = user ? (user.roles as Role[]) : []
+    const roles = getAllRoles(userRoles, true, userId)
 
     return {
-      userId: user.id,
-      email: user.email,
+      userId: userId,
+      email: email,
       roles,
       isAuthenticated: true,
     }

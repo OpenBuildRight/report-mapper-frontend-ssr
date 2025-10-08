@@ -28,12 +28,8 @@ export const authOptions: NextAuthOptions = {
 
         // Add roles to session to avoid extra DB queries
         const userDoc = await getUserById(user.id)
-        if (userDoc) {
-          const userRoles = userDoc.roles as Role[]
-          session.user.roles = getAllRoles(userRoles, true)
-        } else {
-          session.user.roles = [Role.PUBLIC]
-        }
+        const userRoles = userDoc ? (userDoc.roles as Role[]) : []
+        session.user.roles = getAllRoles(userRoles, true, user.id)
       }
 
       return session

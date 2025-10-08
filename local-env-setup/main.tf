@@ -71,6 +71,21 @@ resource "keycloak_user" "user_with_initial_password" {
   }
 }
 
+# Admin user (machine user with all permissions)
+resource "keycloak_user" "admin_user" {
+  realm_id   = keycloak_realm.this.id
+  username   = "admin"
+  enabled    = true
+
+  email      = "admin@example.com"
+  first_name = "Admin"
+  last_name  = "User"
+
+  initial_password {
+    value     = "admin_password"
+  }
+}
+
 output "keycloak_client_secret" {
   value = keycloak_openid_client.openid_client.client_secret
   description = "Client secret for local development (not sensitive for local env)"
@@ -85,4 +100,9 @@ output "keycloak_issuer" {
 output "keycloak_client_id" {
   value = keycloak_openid_client.openid_client.client_id
   description = "Keycloak client ID"
+}
+
+output "admin_user_id" {
+  value = keycloak_user.admin_user.id
+  description = "Admin user UUID (used in ADMIN_USER_ID env var)"
 }

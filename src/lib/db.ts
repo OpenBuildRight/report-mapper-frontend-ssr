@@ -91,9 +91,6 @@ export async function initializeDatabase() {
 
     console.log('Database indexes initialized successfully')
 
-    // Bootstrap users after indexes are created
-    const { bootstrapUsers } = await import('./bootstrap')
-    await bootstrapUsers()
   } catch (error) {
     console.error('Error initializing database indexes:', error)
     // Don't throw - allow app to continue even if index creation fails

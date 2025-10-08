@@ -39,6 +39,7 @@ echo "📝 Extracting configuration values..."
 KEYCLOAK_CLIENT_SECRET=$(terraform output -raw keycloak_client_secret)
 KEYCLOAK_ISSUER=$(terraform output -raw keycloak_issuer)
 KEYCLOAK_CLIENT_ID=$(terraform output -raw keycloak_client_id)
+ADMIN_USER_ID=$(terraform output -raw admin_user_id)
 
 # Generate NextAuth secret
 echo "🔐 Generating NextAuth secret..."
@@ -76,8 +77,9 @@ MINIO_SECRET_KEY=minio_root_password
 MINIO_BUCKET=report-mapper-images
 MINIO_USE_SSL=false
 
-# Bootstrap Users Configuration
-BOOTSTRAP_USERS_FILE=./local-env-setup/bootstrap-users.yaml
+# Admin User (has all roles/permissions in-memory)
+# This is the UUID from Keycloak that appears in the 'sub' claim
+ADMIN_USER_ID=$ADMIN_USER_ID
 EOF
 
 echo ""
@@ -88,7 +90,11 @@ echo "   Keycloak URL: http://localhost:9003"
 echo "   Keycloak Admin: kc_admin_user / kc_admin_password"
 echo "   Realm: my-realm"
 echo "   Client ID: $KEYCLOAK_CLIENT_ID"
-echo "   Test User: alice / alice_password"
+echo ""
+echo "   Test Users:"
+echo "     - alice / alice_password (regular user)"
+echo "     - admin / admin_password (admin user with all permissions)"
+echo "     - Admin User ID: $ADMIN_USER_ID"
 echo ""
 echo "   MongoDB URL: http://localhost:27017"
 echo "   MongoDB Database: reportmapper"
