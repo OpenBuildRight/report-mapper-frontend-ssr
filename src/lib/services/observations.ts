@@ -19,6 +19,7 @@ export interface CreateObservationInput {
   imageIds?: ImageReference[]
   owner: string
   autoPublish?: boolean
+  submitted?: boolean
 }
 
 export interface UpdateObservationInput {
@@ -56,7 +57,7 @@ export async function createObservation(
     revision_created_at: now,
     revision_updated_at: now,
     published: input.autoPublish || false,
-    submitted: true, // Always submitted when created (either for review or auto-published)
+    submitted: input.submitted ?? true, // Default to true if not specified
     owner: input.owner,
   }
 

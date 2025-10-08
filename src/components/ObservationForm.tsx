@@ -97,7 +97,8 @@ export default function ObservationForm() {
       const observationData = {
         description: formData.description,
         location: formData.location,
-        imageIds
+        imageIds,
+        submitted: true, // Mark as submitted for moderator review
       }
 
       const response = await fetch('/api/observations', {

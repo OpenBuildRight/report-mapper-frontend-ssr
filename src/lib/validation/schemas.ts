@@ -23,6 +23,7 @@ export const createObservationSchema = z.object({
   description: z.string().min(1).max(10000).optional(),
   location: locationSchema.optional(),
   imageIds: z.array(imageReferenceSchema).optional(),
+  submitted: z.boolean().optional(),
 })
 
 /**

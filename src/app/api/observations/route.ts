@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       return validation.response
     }
 
-    const { description, location, imageIds } = validation.data
+    const { description, location, imageIds, submitted } = validation.data
 
     const observation = await createObservation({
       description,
@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
       imageIds: imageIds || [],
       owner: context.userId!,
       autoPublish: false,
+      submitted,
     })
 
     return NextResponse.json({

@@ -12,14 +12,62 @@ interface RouteParams {
 
 /**
  * GET /api/observations/[id]
- * Get all revisions for an observation
+ * Get observation revision(s)
+ * - If ?revisionId query param provided: return single revision
+ * - Otherwise: return all revisions
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const context = await getAuthContext(request)
+    const { searchParams } = new URL(request.url)
+    const revisionIdParam = searchParams.get('revisionId')
 
-    const { getObservationRevisions } = await import('@/lib/services/observations')
+    // If specific revision requested
+    if (revisionIdParam) {
+      const revisionId = parseInt(revisionIdParam, 10)
+      const observation = await getObservationRevision(id, revisionId)
+
+      if (!observation) {
+        return NextResponse.json(
+          { error: 'Observation revision not found' },
+          { status: 404 }
+        )
+      }
+
+      // Check read permission
+      if (!canReadObservation(context.roles, observation, context.userId)) {
+        return NextResponse.json(
+          { error: 'Forbidden' },
+          { status: 403 }
+        )
+      }
+
+      return NextResponse.json({
+        id: observation.observation_id,
+        revisionId: observation.revision_id,
+        description: observation.description,
+        location: observation.location ? {
+          latitude: observation.location.coordinates[1],
+          longitude: observation.location.coordinates[0],
+        } : undefined,
+        imageIds: observation.image_ids || [],
+        imageUrls: (observation.image_ids || []).map((img: any) =>
+          `/api/images/${img.id}/file?revisionId=${img.revision_id}`
+        ),
+        createdAt: observation.created_at.toISOString(),
+        revisionCreatedAt: observation.revision_created_at.toISOString(),
+        updatedAt: observation.updated_at.toISOString(),
+        published: observation.published,
+        submitted: observation.submitted,
+        owner: observation.owner,
+        canEdit: canEditObservation(context.roles, observation, context.userId),
+        canDelete: canDeleteObservation(context.roles, observation, context.userId),
+        canPublish: canPublishObservation(context.roles, observation, context.userId),
+      })
+    }
+
+    // Otherwise return all revisions
     const revisions = await getObservationRevisions(id)
 
     if (!revisions || revisions.length === 0) {
@@ -50,6 +98,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         longitude: observation.location.coordinates[0],
       } : undefined,
       imageIds: observation.image_ids || [],
+      imageUrls: (observation.image_ids || []).map((img: any) =>
+        `/api/images/${img.id}/file?revisionId=${img.revision_id}`
+      ),
       createdAt: observation.created_at.toISOString(),
       revisionCreatedAt: observation.revision_created_at.toISOString(),
       updatedAt: observation.updated_at.toISOString(),
