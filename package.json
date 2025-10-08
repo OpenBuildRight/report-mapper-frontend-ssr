@@ -8,7 +8,10 @@
   },
   "packageManager": "pnpm@10.15.1",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "setup": "tsx scripts/setup-local-env.ts",
+    "setup-dev-users": "tsx scripts/setup-dev-users.ts",
+    "dev": "concurrently \"next dev --turbopack\" \"npm run setup-dev-users\"",
+    "dev:server-only": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "biome check",
@@ -47,9 +50,11 @@
     "@types/react-dom": "^19",
     "@types/swagger-ui-react": "^5.18.0",
     "@types/uuid": "^11.0.0",
+    "concurrently": "^9.2.1",
     "storybook": "^9.1.10",
     "swagger-ui-react": "^5.29.3",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }
