@@ -11,9 +11,25 @@
  */
 
 import { spawn } from 'child_process'
-import { getUserByEmail, assignRole } from '../src/lib/users'
-import { Role } from '../src/types/rbac'
-import clientPromise from '../src/lib/mongodb'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+// Load environment variables from .env.local
+const ENV_FILE = resolve(__dirname, '../.env.local')
+try {
+  const envContent = readFileSync(ENV_FILE, 'utf-8')
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+
+    const match = trimmed.match(/^([^=]+)=(.*)$/)
+    if (match) {
+      process.env[match[1]] = match[2]
+    }
+  }
+} catch {
+  console.warn('Warning: Could not load .env.local')
+}
 
 // ANSI color codes
 const colors = {
@@ -34,6 +50,8 @@ async function waitForMongoDB(): Promise<boolean> {
 
   for (let i = 0; i < maxRetries; i++) {
     try {
+      // Dynamically import to avoid top-level env var check
+      const { default: clientPromise } = await import('../src/lib/mongodb')
       await clientPromise
       return true
     } catch {
@@ -56,6 +74,10 @@ async function initializeDevUsers() {
       return
     }
     log('✅', 'MongoDB is ready!')
+
+    // Dynamically import app modules after env vars are loaded
+    const { getUserByEmail, assignRole } = await import('../src/lib/users')
+    const { Role } = await import('../src/types/rbac')
 
     // Find alice user by email (created by NextAuth on first login)
     log('🔍', 'Looking for alice user...')
