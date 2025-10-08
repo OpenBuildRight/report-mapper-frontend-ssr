@@ -56,7 +56,7 @@ export async function createObservation(
     revision_created_at: now,
     revision_updated_at: now,
     published: input.autoPublish || false,
-    submitted: input.autoPublish || false,
+    submitted: true, // Always submitted when created (either for review or auto-published)
     owner: input.owner,
   }
 
