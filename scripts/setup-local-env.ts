@@ -105,6 +105,10 @@ async function main() {
     error('compose.yaml not found in local-env-setup directory')
   }
 
+  // Stop and remove existing containers for clean state
+  log('🧹', 'Cleaning up existing containers...')
+  execVerbose('docker compose down -v', SETUP_DIR)
+
   // Start Docker containers
   log('📦', 'Starting Docker containers...')
   execVerbose('docker compose up -d', SETUP_DIR)
@@ -123,6 +127,7 @@ async function main() {
   const keycloakIssuer = exec('terraform output -raw keycloak_issuer', SETUP_DIR)
   const keycloakClientId = exec('terraform output -raw keycloak_client_id', SETUP_DIR)
   const adminUserId = exec('terraform output -raw admin_user_id', SETUP_DIR)
+  const devUserId = exec('terraform output -raw dev_user_id', SETUP_DIR)
 
   // Generate NextAuth secret
   log('🔐', 'Generating NextAuth secret...')
@@ -161,6 +166,9 @@ MINIO_USE_SSL=false
 # Admin User (has all roles/permissions in-memory)
 # This is the UUID from Keycloak that appears in the 'sub' claim
 ADMIN_USER_ID=${adminUserId}
+
+# Dev User ID (for dev initialization)
+DEV_USER_ID=${devUserId}
 `
 
   writeFileSync(ENV_FILE, envContent, 'utf-8')

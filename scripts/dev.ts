@@ -76,24 +76,26 @@ async function initializeDevUsers() {
     log('✅', 'MongoDB is ready!')
 
     // Dynamically import app modules after env vars are loaded
-    const { getUserByEmail, assignRole } = await import('../src/lib/users')
+    const { assignRole } = await import('../src/lib/users')
     const { Role } = await import('../src/types/rbac')
 
-    // Find alice user by email (created by NextAuth on first login)
-    log('🔍', 'Looking for alice user...')
-    const alice = await getUserByEmail('alice@domain.com')
+    // Get dev user ID from environment variable
+    const devUserId = process.env.DEV_USER_ID
 
-    if (!alice) {
-      console.log(`${colors.yellow}⚠️  Alice user not found (will be created on first login)${colors.reset}\n`)
+    if (!devUserId) {
+      console.log(`${colors.yellow}⚠️  DEV_USER_ID not found in environment${colors.reset}\n`)
       return
     }
 
-    // Assign roles to alice
-    log('👤', `Configuring alice (${alice.id})...`)
-    await assignRole(alice.id, Role.VALIDATED_USER)
+    log('✅', `Dev user ID: ${devUserId}`)
+
+    // Assign roles to dev user using their user ID
+    // assignRole will create the user if they don't exist
+    log('👤', 'Configuring dev user roles...')
+    await assignRole(devUserId, Role.VALIDATED_USER)
     log('✅', `Assigned role: ${Role.VALIDATED_USER}`)
 
-    await assignRole(alice.id, Role.MODERATOR)
+    await assignRole(devUserId, Role.MODERATOR)
     log('✅', `Assigned role: ${Role.MODERATOR}`)
 
     console.log(`${colors.green}✅ Development users initialized successfully!${colors.reset}\n`)

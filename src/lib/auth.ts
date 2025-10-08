@@ -21,15 +21,64 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // On first sign-in, merge NextAuth user with any pre-existing user by Keycloak ID
+      if (account && profile && profile.sub) {
+        const collection = await (await clientPromise).db().collection('users')
+
+        // Check if a user with this Keycloak ID already exists (pre-created)
+        const existingUserById = await collection.findOne({ id: profile.sub })
+
+        if (existingUserById) {
+          // User was pre-created with roles, update with real email/name from NextAuth
+          await collection.updateOne(
+            { id: profile.sub },
+            {
+              $set: {
+                email: user.email,
+                name: user.name,
+                image: user.image,
+                updated_at: new Date()
+              }
+            }
+          )
+
+          // Delete the NextAuth-created duplicate if it exists
+          await collection.deleteOne({
+            email: user.email,
+            id: { $ne: profile.sub }
+          })
+        } else {
+          // No pre-existing user, update the NextAuth-created user with Keycloak ID
+          await collection.updateOne(
+            { email: user.email },
+            {
+              $set: {
+                id: profile.sub,
+                updated_at: new Date()
+              },
+              $setOnInsert: {
+                roles: []
+              }
+            }
+          )
+        }
+      }
+      return true
+    },
     async session({ session, user }) {
       // Add user id to session
       if (session.user) {
-        session.user.id = user.id
+        // First try to get the user to find their Keycloak ID
+        const userDoc = await getUserById(user.id)
+
+        // Use Keycloak sub if available, otherwise fall back to NextAuth id
+        const userId = userDoc?.id || user.id
+        session.user.id = userId
 
         // Add roles to session to avoid extra DB queries
-        const userDoc = await getUserById(user.id)
         const userRoles = userDoc ? (userDoc.roles as Role[]) : []
-        session.user.roles = getAllRoles(userRoles, true, user.id)
+        session.user.roles = getAllRoles(userRoles, true, userId)
       }
 
       return session

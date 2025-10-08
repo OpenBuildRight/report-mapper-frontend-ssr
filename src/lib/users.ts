@@ -65,17 +65,36 @@ export async function getUserRoles(userId: string): Promise<Role[]> {
 
 /**
  * Assign a role to a user
+ * Creates the user if they don't exist (with the userId as their id)
  */
 export async function assignRole(userId: string, role: Role): Promise<void> {
   const collection = await getUsersCollection()
 
-  await collection.updateOne(
-    { id: userId },
-    {
-      $addToSet: { roles: role },
-      $set: { updated_at: new Date() },
-    }
-  )
+  // Check if user exists
+  const existingUser = await getUserById(userId)
+
+  if (!existingUser) {
+    // Create a placeholder user with the given userId
+    // This allows setting up users before they first log in
+    const now = new Date()
+    await collection.insertOne({
+      id: userId,
+      email: `${userId}@placeholder.local`, // Placeholder email, will be updated on first login
+      name: 'User',
+      roles: [role],
+      created_at: now,
+      updated_at: now,
+    })
+  } else {
+    // Update existing user
+    await collection.updateOne(
+      { id: userId },
+      {
+        $addToSet: { roles: role },
+        $set: { updated_at: new Date() },
+      }
+    )
+  }
 }
 
 /**

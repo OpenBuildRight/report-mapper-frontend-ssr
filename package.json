@@ -8,7 +8,7 @@
   },
   "packageManager": "pnpm@10.15.1",
   "scripts": {
-    "setup": "tsx scripts/setup-local-env.ts",
+    "setup-dev": "tsx scripts/setup-local-env.ts",
     "dev": "tsx scripts/dev.ts",
     "build": "next build --turbopack",
     "start": "next start",

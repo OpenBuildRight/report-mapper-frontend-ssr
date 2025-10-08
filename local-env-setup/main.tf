@@ -106,3 +106,8 @@ output "admin_user_id" {
   value = keycloak_user.admin_user.id
   description = "Admin user UUID (used in ADMIN_USER_ID env var)"
 }
+
+output "dev_user_id" {
+  value = keycloak_user.user_with_initial_password.id
+  description = "Dev user UUID (alice)"
+}
