@@ -57,9 +57,11 @@ export async function initializeDatabase() {
   try {
     const db = await getDb()
 
-    // Users collection indexes
-    await db.collection(COLLECTIONS.USERS).createIndex({ id: 1 }, { unique: true })
-    await db.collection(COLLECTIONS.USERS).createIndex({ email: 1 }, { unique: true })
+    // Note: 'users' collection is managed by NextAuth - we don't create indexes for it
+
+    // User roles collection (our separate table for role management)
+    const { initializeUserRolesIndexes } = await import('./user-roles')
+    await initializeUserRolesIndexes()
 
     // Observation revisions indexes
     // Unique constraint - must be able to uniquely identify by observation_id + revision_id

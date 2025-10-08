@@ -3,7 +3,7 @@ import KeycloakProvider from "next-auth/providers/keycloak"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import { config } from "@/config/env"
 import clientPromise from "@/lib/mongodb"
-import { getUserById } from "@/lib/users"
+import { getUserRoles } from "@/lib/user-roles"
 import { getAllRoles } from "@/lib/rbac"
 import { Role } from "@/types/rbac"
 
@@ -14,71 +14,33 @@ export const authOptions: NextAuthOptions = {
       clientId: config.keycloak.clientId,
       clientSecret: config.keycloak.clientSecret,
       issuer: config.keycloak.issuer,
+      profile(profile) {
+        // Map Keycloak profile to NextAuth user
+        // The 'sub' claim is the Keycloak user ID
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        }
+      },
     }),
   ],
   session: {
-    strategy: "database",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    strategy: "database", // Database sessions for security (httpOnly cookies, server-side invalidation)
+    maxAge: 60, // 30 days
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // On first sign-in, merge NextAuth user with any pre-existing user by Keycloak ID
-      if (account && profile && profile.sub) {
-        const collection = await (await clientPromise).db().collection('users')
-
-        // Check if a user with this Keycloak ID already exists (pre-created)
-        const existingUserById = await collection.findOne({ id: profile.sub })
-
-        if (existingUserById) {
-          // User was pre-created with roles, update with real email/name from NextAuth
-          await collection.updateOne(
-            { id: profile.sub },
-            {
-              $set: {
-                email: user.email,
-                name: user.name,
-                image: user.image,
-                updated_at: new Date()
-              }
-            }
-          )
-
-          // Delete the NextAuth-created duplicate if it exists
-          await collection.deleteOne({
-            email: user.email,
-            id: { $ne: profile.sub }
-          })
-        } else {
-          // No pre-existing user, update the NextAuth-created user with Keycloak ID
-          await collection.updateOne(
-            { email: user.email },
-            {
-              $set: {
-                id: profile.sub,
-                updated_at: new Date()
-              },
-              $setOnInsert: {
-                roles: []
-              }
-            }
-          )
-        }
-      }
-      return true
-    },
     async session({ session, user }) {
-      // Add user id to session
       if (session.user) {
-        // First try to get the user to find their Keycloak ID
-        const userDoc = await getUserById(user.id)
+        // The user.id from NextAuth is the Keycloak sub via profile mapping
+        session.user.id = user.id
 
-        // Use Keycloak sub if available, otherwise fall back to NextAuth id
-        const userId = userDoc?.id || user.id
-        session.user.id = userId
-
-        // Add roles to session to avoid extra DB queries
-        const userRoles = userDoc ? (userDoc.roles as Role[]) : []
-        session.user.roles = getAllRoles(userRoles, true, userId)
+        // Get roles from our separate user_roles table
+        // Performance: 2 DB queries per request (session + roles)
+        // Trade-off: Better security (session IDs) and immediate role updates
+        const userRoles = await getUserRoles(user.id)
+        session.user.roles = getAllRoles(userRoles, true, user.id)
       }
 
       return session

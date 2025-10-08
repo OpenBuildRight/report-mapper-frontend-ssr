@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePermission, handleAuthError } from '@/lib/middleware/auth'
 import { Permission, Role } from '@/types/rbac'
-import { assignRole, removeRole, getUserRoles } from '@/lib/users'
+import { assignRole, removeRole, getUserRoles } from '@/lib/user-roles'
 import { z } from 'zod'
 
 const assignRoleSchema = z.object({

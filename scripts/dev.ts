@@ -76,7 +76,7 @@ async function initializeDevUsers() {
     log('✅', 'MongoDB is ready!')
 
     // Dynamically import app modules after env vars are loaded
-    const { assignRole } = await import('../src/lib/users')
+    const { assignRole } = await import('../src/lib/user-roles')
     const { Role } = await import('../src/types/rbac')
 
     // Get dev user ID from environment variable
@@ -89,8 +89,7 @@ async function initializeDevUsers() {
 
     log('✅', `Dev user ID: ${devUserId}`)
 
-    // Assign roles to dev user using their user ID
-    // assignRole will create the user if they don't exist
+    // Assign roles to dev user using their Keycloak user ID
     log('👤', 'Configuring dev user roles...')
     await assignRole(devUserId, Role.VALIDATED_USER)
     log('✅', `Assigned role: ${Role.VALIDATED_USER}`)
