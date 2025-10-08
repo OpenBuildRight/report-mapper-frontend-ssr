@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext, handleAuthError } from '@/lib/middleware/auth'
-import { getObservationRevisions } from '@/lib/services/observations'
+import { getAuthContext, requireAuth, handleAuthError } from '@/lib/middleware/auth'
+import { getObservationRevisions, deleteObservation, updateObservationRevision, getObservationRevision } from '@/lib/services/observations'
 import { canReadObservation, canEditObservation, canDeleteObservation, canPublishObservation } from '@/lib/rbac'
+import { canEditEntity, canDeleteEntity } from '@/lib/rbac-generic'
 
 interface RouteParams {
   params: Promise<{
@@ -70,3 +71,97 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+/**
+ * PATCH /api/observations/[id]
+ * Update a specific revision of an observation
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const context = await requireAuth(request)
+    const { id } = await params
+    const body = await request.json()
+    const { revisionId, description, location, imageIds } = body
+
+    if (!revisionId) {
+      return NextResponse.json(
+        { error: 'revisionId is required' },
+        { status: 400 }
+      )
+    }
+
+    // Get the observation to check permissions
+    const observation = await getObservationRevision(id, revisionId)
+
+    if (!observation) {
+      return NextResponse.json(
+        { error: 'Observation not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check if user can edit this observation
+    if (!canEditEntity(context.roles, observation, context.userId)) {
+      return NextResponse.json(
+        { error: 'You do not have permission to edit this observation' },
+        { status: 403 }
+      )
+    }
+
+    // Update the observation
+    const updated = await updateObservationRevision(id, {
+      description,
+      location,
+      imageIds,
+      owner: context.userId!,
+    })
+
+    return NextResponse.json({
+      id: updated.observation_id,
+      revisionId: updated.revision_id,
+      message: 'Observation updated successfully',
+    })
+  } catch (error) {
+    return handleAuthError(error)
+  }
+}
+
+/**
+ * DELETE /api/observations/[id]
+ * Delete an observation (all revisions)
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const context = await requireAuth(request)
+    const { id } = await params
+
+    // Get the latest revision to check permissions
+    const revisions = await getObservationRevisions(id)
+
+    if (!revisions || revisions.length === 0) {
+      return NextResponse.json(
+        { error: 'Observation not found' },
+        { status: 404 }
+      )
+    }
+
+    const latestRevision = revisions[0]
+
+    // Check if user can delete this observation
+    if (!canDeleteEntity(context.roles, latestRevision, context.userId)) {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this observation' },
+        { status: 403 }
+      )
+    }
+
+    // Delete the observation
+    await deleteObservation(id)
+
+    return NextResponse.json({
+      message: 'Observation deleted successfully',
+      id,
+    })
+  } catch (error) {
+    return handleAuthError(error)
+  }
+}

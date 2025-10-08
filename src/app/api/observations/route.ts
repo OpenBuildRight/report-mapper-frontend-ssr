@@ -58,6 +58,9 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/observations
  * Create a new observation
+ *
+ * Photos should be uploaded separately to /api/images first,
+ * then reference the image IDs in the imageIds array
  */
 export async function POST(request: NextRequest) {
   try {
@@ -67,6 +70,7 @@ export async function POST(request: NextRequest) {
     // Validate request body
     const validation = await validateBody(body, createObservationSchema)
     if (!validation.success) {
+      console.error('Observation validation failed:', validation.response)
       return validation.response
     }
 
@@ -75,7 +79,7 @@ export async function POST(request: NextRequest) {
     const observation = await createObservation({
       description,
       location,
-      imageIds,
+      imageIds: imageIds || [],
       owner: context.userId!,
       autoPublish: false,
     })
