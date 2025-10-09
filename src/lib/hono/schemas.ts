@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi'
+import { Role } from '@/types/rbac'
 
 /**
  * Shared schemas for API validation and OpenAPI generation
@@ -90,4 +91,54 @@ export const PublishObservationResponseSchema = z.object({
 
 export const ErrorSchema = z.object({
   error: z.string(),
+})
+
+// Image schemas
+export const ImageSchema = z.object({
+  id: z.string().uuid(),
+  revisionId: z.number().int(),
+  imageKey: z.string(),
+  description: z.string().optional(),
+  location: LocationSchema.optional(),
+  metadataCreatedAt: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  revisionCreatedAt: z.string(),
+  published: z.boolean(),
+  submitted: z.boolean(),
+  owner: z.string(),
+})
+
+export const UploadImageResponseSchema = z.object({
+  id: z.string().uuid(),
+  revisionId: z.number().int(),
+  imageKey: z.string(),
+  published: z.boolean(),
+  submitted: z.boolean(),
+  message: z.string(),
+})
+
+export const GetImageRevisionsResponseSchema = z.object({
+  imageId: z.string().uuid(),
+  revisions: z.array(ImageSchema),
+  total: z.number().int(),
+})
+
+// Admin schemas
+export const RoleSchema = z.nativeEnum(Role)
+
+export const AssignRoleRequestSchema = z.object({
+  role: RoleSchema,
+})
+
+export const RemoveRoleRequestSchema = z.object({
+  role: RoleSchema,
+})
+
+export const GetUserRolesResponseSchema = z.object({
+  roles: z.array(RoleSchema),
+})
+
+export const RoleOperationResponseSchema = z.object({
+  success: z.boolean(),
 })
