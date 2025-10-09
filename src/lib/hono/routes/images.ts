@@ -11,6 +11,7 @@ import { uploadImage, getMinioClient, getBucketName } from '@/lib/minio'
 import { v4 as uuidv4 } from 'uuid'
 import { canReadObservation } from '@/lib/rbac'
 import * as schemas from '@/lib/hono/schemas'
+import { mapImage } from '@/lib/hono/mappers'
 
 export const imagesApp = new OpenAPIHono()
 
@@ -133,23 +134,7 @@ imagesApp.openapi(getImageRevisionsRoute, async (c) => {
     canReadObservation(context.roles, rev, context.userId)
   )
 
-  const formattedRevisions = visibleRevisions.map(rev => ({
-    id: rev.id,
-    revisionId: rev.revision_id,
-    imageKey: rev.image_key,
-    description: rev.description,
-    location: rev.image_metadata_location ? {
-      latitude: rev.image_metadata_location.coordinates[1],
-      longitude: rev.image_metadata_location.coordinates[0],
-    } : undefined,
-    metadataCreatedAt: rev.image_metadata_created_at?.toISOString(),
-    createdAt: rev.created_at.toISOString(),
-    updatedAt: rev.updated_at.toISOString(),
-    revisionCreatedAt: rev.revision_created_at.toISOString(),
-    published: rev.published,
-    submitted: rev.submitted,
-    owner: rev.owner,
-  }))
+  const formattedRevisions = visibleRevisions.map(mapImage)
 
   return c.json({
     imageId: id,

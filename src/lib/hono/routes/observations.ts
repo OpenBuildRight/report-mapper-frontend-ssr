@@ -11,15 +11,11 @@ import {
   publishObservationRevision,
 } from '@/lib/services/observations'
 import { parseFiltersFromSearchParams } from '@/lib/services/observation-filters'
-import {
-  canReadObservation,
-  canEditObservation,
-  canDeleteObservation,
-  canPublishObservation,
-} from '@/lib/rbac'
+import { canReadObservation } from '@/lib/rbac'
 import { canEditEntity, canDeleteEntity, canPublishEntity } from '@/lib/rbac-generic'
 import { Permission } from '@/types/rbac'
 import * as schemas from '@/lib/hono/schemas'
+import { mapObservation, mapObservationListItem } from '@/lib/hono/mappers'
 
 export const observationsApp = new OpenAPIHono()
 
@@ -55,25 +51,9 @@ observationsApp.openapi(listObservationsRoute, async (c) => {
     roles: context.roles,
   })
 
-  const apiObservations = observations.map(obs => ({
-    id: obs.observation_id,
-    revisionId: obs.revision_id,
-    description: obs.description,
-    location: obs.location ? {
-      latitude: obs.location.coordinates[1],
-      longitude: obs.location.coordinates[0],
-    } : undefined,
-    imageIds: obs.image_ids || [],
-    createdAt: obs.created_at.toISOString(),
-    revisionCreatedAt: obs.revision_created_at.toISOString(),
-    updatedAt: obs.updated_at.toISOString(),
-    published: obs.published,
-    submitted: obs.submitted,
-    owner: obs.owner,
-    canEdit: canEditObservation(context.roles, obs, context.userId),
-    canDelete: canDeleteObservation(context.roles, obs, context.userId),
-    canPublish: canPublishObservation(context.roles, obs, context.userId),
-  }))
+  const apiObservations = observations.map(obs =>
+    mapObservationListItem(obs, context.roles, context.userId)
+  )
 
   return c.json({
     observations: apiObservations,
@@ -182,28 +162,7 @@ observationsApp.openapi(getObservationRoute, async (c) => {
       throw new HTTPException(403, { message: 'Forbidden' })
     }
 
-    return c.json({
-      id: observation.observation_id,
-      revisionId: observation.revision_id,
-      description: observation.description,
-      location: observation.location ? {
-        latitude: observation.location.coordinates[1],
-        longitude: observation.location.coordinates[0],
-      } : undefined,
-      imageIds: observation.image_ids || [],
-      imageUrls: (observation.image_ids || []).map((img: any) =>
-        `/api/images/${img.id}/file?revisionId=${img.revision_id}`
-      ),
-      createdAt: observation.created_at.toISOString(),
-      revisionCreatedAt: observation.revision_created_at.toISOString(),
-      updatedAt: observation.updated_at.toISOString(),
-      published: observation.published,
-      submitted: observation.submitted,
-      owner: observation.owner,
-      canEdit: canEditObservation(context.roles, observation, context.userId),
-      canDelete: canDeleteObservation(context.roles, observation, context.userId),
-      canPublish: canPublishObservation(context.roles, observation, context.userId),
-    })
+    return c.json(mapObservation(observation, context.roles, context.userId))
   }
 
   const revisions = await getObservationRevisions(id)
@@ -220,28 +179,9 @@ observationsApp.openapi(getObservationRoute, async (c) => {
     throw new HTTPException(403, { message: 'Forbidden' })
   }
 
-  const formattedRevisions = visibleRevisions.map(observation => ({
-    id: observation.observation_id,
-    revisionId: observation.revision_id,
-    description: observation.description,
-    location: observation.location ? {
-      latitude: observation.location.coordinates[1],
-      longitude: observation.location.coordinates[0],
-    } : undefined,
-    imageIds: observation.image_ids || [],
-    imageUrls: (observation.image_ids || []).map((img: any) =>
-      `/api/images/${img.id}/file?revisionId=${img.revision_id}`
-    ),
-    createdAt: observation.created_at.toISOString(),
-    revisionCreatedAt: observation.revision_created_at.toISOString(),
-    updatedAt: observation.updated_at.toISOString(),
-    published: observation.published,
-    submitted: observation.submitted,
-    owner: observation.owner,
-    canEdit: canEditObservation(context.roles, observation, context.userId),
-    canDelete: canDeleteObservation(context.roles, observation, context.userId),
-    canPublish: canPublishObservation(context.roles, observation, context.userId),
-  }))
+  const formattedRevisions = visibleRevisions.map(obs =>
+    mapObservation(obs, context.roles, context.userId)
+  )
 
   return c.json({
     observationId: id,
