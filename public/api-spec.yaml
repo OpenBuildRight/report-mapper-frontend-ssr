@@ -1044,8 +1044,92 @@ paths:
         '404':
           description: Image not found
 
+  /observations/{id}/publish:
+    post:
+      summary: Publish an observation
+      description: Publish the latest revision of an observation (requires publish permission)
+      tags:
+        - Observations
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The observation ID to publish
+      responses:
+        '200':
+          description: Observation published successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+        '404':
+          description: Observation not found
+
+  /admin/users/{userId}/roles:
+    post:
+      summary: Assign roles to a user
+      description: Assign one or more roles to a user (requires admin privileges)
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The user ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of role names to assign
+      responses:
+        '200':
+          description: Roles assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Authentication required
+        '403':
+          description: Forbidden - admin privileges required
+        '404':
+          description: User not found
+
 tags:
   - name: Observations
     description: Wildlife observation endpoints
   - name: Images
     description: Image management endpoints
+  - name: Admin
+    description: Administrative endpoints

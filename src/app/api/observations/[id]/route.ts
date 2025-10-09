@@ -159,16 +159,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update the observation
-    const updated = await updateObservationRevision(id, {
+    await updateObservationRevision(id, revisionId, {
       description,
       location,
       imageIds,
-      owner: context.userId!,
     })
 
+    const updated = await getObservationRevision(id, revisionId)
+
     return NextResponse.json({
-      id: updated.observation_id,
-      revisionId: updated.revision_id,
+      id: updated!.observation_id,
+      revisionId: updated!.revision_id,
       message: 'Observation updated successfully',
     })
   } catch (error) {

@@ -71,7 +71,7 @@ export async function verifyBearerToken(token: string): Promise<BearerAuthContex
 /**
  * Extract bearer token from Authorization header
  */
-export function extractBearerToken(request: NextRequest): string | null {
+export function extractBearerToken(request: Request | NextRequest): string | null {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) {
     return null

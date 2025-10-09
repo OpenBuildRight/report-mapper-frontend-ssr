@@ -16,7 +16,7 @@ export interface AuthContext {
  * Get authentication context from request
  * Supports both session cookies (browser) and OAuth bearer tokens (API)
  */
-export async function getAuthContext(request?: NextRequest): Promise<AuthContext> {
+export async function getAuthContext(request?: Request | NextRequest): Promise<AuthContext> {
   // First, try bearer token authentication (for API access)
   if (request) {
     const bearerToken = extractBearerToken(request)
@@ -57,7 +57,7 @@ export async function getAuthContext(request?: NextRequest): Promise<AuthContext
 /**
  * Require authentication - returns 401 if not authenticated
  */
-export async function requireAuth(request?: NextRequest): Promise<AuthContext> {
+export async function requireAuth(request?: Request | NextRequest): Promise<AuthContext> {
   const context = await getAuthContext(request)
 
   if (!context.isAuthenticated) {
@@ -70,7 +70,7 @@ export async function requireAuth(request?: NextRequest): Promise<AuthContext> {
 /**
  * Require specific permission - returns 403 if permission not granted
  */
-export async function requirePermission(permission: Permission, request?: NextRequest): Promise<AuthContext> {
+export async function requirePermission(permission: Permission, request?: Request | NextRequest): Promise<AuthContext> {
   const context = await requireAuth(request)
 
   if (!hasPermission(context.roles, permission)) {
@@ -83,7 +83,7 @@ export async function requirePermission(permission: Permission, request?: NextRe
 /**
  * Check if current user has permission
  */
-export async function checkPermission(permission: Permission, request?: NextRequest): Promise<boolean> {
+export async function checkPermission(permission: Permission, request?: Request | NextRequest): Promise<boolean> {
   const context = await getAuthContext(request)
   return hasPermission(context.roles, permission)
 }
