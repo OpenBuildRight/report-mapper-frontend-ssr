@@ -1,13 +1,11 @@
 'use server'
 
+import { Collection, Db, Filter, ObjectId } from "mongodb"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { Permission, Role, ROLE_PERMISSIONS } from "@/types/rbac"
 
-  // Generic revision document type
-import {Collection, Db, Filter, InsertOneResult, ObjectId} from "mongodb";
-import {getServerSession} from "next-auth";
-import {authOptions} from "@/lib/auth";
-import {Permission, Role, ROLE_PERMISSIONS} from "@/types/rbac";
-
-interface RevisionDocument {
+export interface RevisionDocument {
     _id?: ObjectId
     itemId: string
     revisionId: number
@@ -19,56 +17,81 @@ interface RevisionDocument {
     revisionCreatedAt?: Date
 }
 
-class NotFoundError extends Error {}
+export class NotFoundError extends Error {}
+export class NotAuthorizedError extends Error {}
 
-class NotAuthorizedError extends Error {}
-
+/**
+ * UserAuthContext - uses permissions (not roles) for cleaner access control
+ */
 interface UserAuthContext {
     userId?: string
     permissions: Permission[]
 }
 
-async function getUserAuthContext() : Promise<UserAuthContext> {
-    const session = await getServerSession(authOptions);
-    let roles = [Role.PUBLIC];
+/**
+ * Get user authentication context with resolved permissions
+ */
+async function getUserAuthContext(): Promise<UserAuthContext> {
+    const session = await getServerSession(authOptions)
+    let roles = [Role.PUBLIC]
+
     if (session?.user?.roles) {
-        roles = session.user.roles;
+        roles = session.user.roles
     }
-    const permissions = roles.flatMap(role => {
-        return ROLE_PERMISSIONS[role]
-    }).filter(item => item!);
+
+    const permissions = roles
+        .flatMap(role => ROLE_PERMISSIONS[role])
+        .filter(item => item != null)
+
     return {
-        userId : session?.user.id,
+        userId: session?.user?.id,
         permissions: permissions
     }
 }
 
-async function hasReadAccess(document: RevisionDocument) : Promise<boolean> {
-    const authContext = await getUserAuthContext();
-    return (document.published && Permission.READ_ALL_OBSERVATIONS in authContext.permissions)
-    || (document.owner == authContext.userId && Permission.READ_OWN_OBSERVATIONS in authContext.permissions)
-    || (Permission.READ_ALL_OBSERVATIONS in authContext.permissions)
+async function hasReadAccess(document: RevisionDocument): Promise<boolean> {
+    const authContext = await getUserAuthContext()
+
+    return (
+        (document.published && authContext.permissions.includes(Permission.READ_PUBLISHED_OBSERVATIONS)) ||
+        (document.owner === authContext.userId && authContext.permissions.includes(Permission.READ_OWN_OBSERVATIONS)) ||
+        authContext.permissions.includes(Permission.READ_ALL_OBSERVATIONS)
+    )
 }
 
-async function hasEditAccess(document?: RevisionDocument) : Promise<boolean> {
-    const authContext = await getUserAuthContext();
-    return (!document && Permission.EDIT_OWN_OBSERVATIONS in authContext.permissions)
-    || (document! && document.owner == authContext.userId && Permission.EDIT_OWN_OBSERVATIONS in authContext.permissions)
+async function hasEditAccess(document?: RevisionDocument): Promise<boolean> {
+    const authContext = await getUserAuthContext()
+
+    if (!document) {
+        // Creating new document
+        return authContext.permissions.includes(Permission.EDIT_OWN_OBSERVATIONS)
+    }
+
+    return (
+        document.owner === authContext.userId &&
+        authContext.permissions.includes(Permission.EDIT_OWN_OBSERVATIONS)
+    )
 }
 
-async function hasDeleteAccess(document: RevisionDocument) : Promise<boolean> {
-    const authContext = await getUserAuthContext();
-    return (document.owner == authContext.userId && Permission.DELETE_OWN_OBSERVATIONS in authContext.permissions)
-    || (Permission.DELETE_ALL_OBSERVATIONS in authContext.permissions)
+async function hasDeleteAccess(document: RevisionDocument): Promise<boolean> {
+    const authContext = await getUserAuthContext()
+
+    return (
+        (document.owner === authContext.userId && authContext.permissions.includes(Permission.DELETE_OWN_OBSERVATIONS)) ||
+        authContext.permissions.includes(Permission.DELETE_ALL_OBSERVATIONS)
+    )
 }
 
-async function hasPublishAccess(document: RevisionDocument) : Promise<boolean> {
-    const authContext = await getUserAuthContext();
-    return (document.owner == authContext.userId && Permission.PUBLISH_OWN_OBSERVATIONS in authContext.permissions)
-    || (Permission.PUBLISH_ALL_OBSERVATIONS in authContext.permissions)
+async function hasPublishAccess(document: RevisionDocument): Promise<boolean> {
+    const authContext = await getUserAuthContext()
+
+    return (
+        (document.owner === authContext.userId && authContext.permissions.includes(Permission.PUBLISH_OWN_OBSERVATIONS)) ||
+        authContext.permissions.includes(Permission.PUBLISH_ALL_OBSERVATIONS)
+    )
 }
 
-class RevisionController<S, T extends RevisionDocument & S> {
+export class RevisionController<S, T extends RevisionDocument & S> {
 
     private collectionName: string;
     private db: Db;
@@ -241,6 +264,10 @@ class RevisionController<S, T extends RevisionDocument & S> {
             throw new NotAuthorizedError('User does not have permission to create objects');
         }
 
+        if (!authContext.userId) {
+            throw new NotAuthorizedError('User ID required to create objects');
+        }
+
         const collection = await this.getCollection();
         const now = new Date();
 
@@ -250,7 +277,7 @@ class RevisionController<S, T extends RevisionDocument & S> {
             revisionId: 0,
             published: false,
             submitted: true,
-            owner: authContext.userId!,
+            owner: authContext.userId,
             createdAt: now,
             updatedAt: now,
             revisionCreatedAt: now

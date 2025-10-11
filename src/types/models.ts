@@ -1,41 +1,57 @@
 import { ObjectId } from 'mongodb'
-import { BaseRevision } from './revision'
 
-// Database models matching the requirements
-
-/**
- * Image Revision - version controlled image entity
- */
-export interface ImageRevisionDocument extends BaseRevision {
+// Base revision document interface (matches RevisionController)
+export interface RevisionDocument {
   _id?: ObjectId
-  image_key: string // Path to object store location
-  description?: string
-  image_metadata_location?: {
-    type: 'Point'
-    coordinates: [number, number] // [longitude, latitude]
-  }
-  image_metadata_created_at?: Date
-}
-
-export interface ImageReference {
-  id: string // Image UUID
-  revision_id: number
+  itemId: string
+  revisionId: number
+  published: boolean
+  submitted: boolean
+  owner: string
+  createdAt?: Date
+  updatedAt?: Date
+  revisionCreatedAt?: Date
 }
 
 /**
- * Observation Revision - version controlled observation entity
+ * Image-specific fields
  */
-export interface ObservationRevisionDocument extends BaseRevision {
-  _id?: ObjectId
-  observation_id: string // UUID of observation (alias for 'id' field for clarity)
+export interface ImageFields {
+  imageKey: string // Path to object store location
   description?: string
   location?: {
     type: 'Point'
     coordinates: [number, number] // [longitude, latitude]
   }
-  image_ids?: ImageReference[]
-  revision_updated_at: Date
+  metadataCreatedAt?: Date
 }
+
+/**
+ * Image Revision - version controlled image entity
+ */
+export interface ImageRevisionDocument extends RevisionDocument, ImageFields {}
+
+export interface ImageReference {
+  id: string // Image UUID
+  revisionId: number
+}
+
+/**
+ * Observation-specific fields
+ */
+export interface ObservationFields {
+  description?: string
+  location?: {
+    type: 'Point'
+    coordinates: [number, number] // [longitude, latitude]
+  }
+  imageIds?: ImageReference[]
+}
+
+/**
+ * Observation Revision - version controlled observation entity
+ */
+export interface ObservationRevisionDocument extends RevisionDocument, ObservationFields {}
 
 export interface UserDocument {
   _id?: ObjectId

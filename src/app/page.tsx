@@ -1,41 +1,42 @@
 import HomePage from '@/components/HomePage'
 import { Observation } from '@/types/observation'
+import { observationController } from '@/lib/actions/observations'
+import { getAuthContext } from '@/lib/middleware/auth'
+import { canEditEntity } from '@/lib/rbac-generic'
 
 async function getObservations(): Promise<Observation[]> {
   try {
-    // Fetch from our API (server-side in this Server Component)
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const response = await fetch(`${baseUrl}/api/observations`, {
-      cache: 'no-store', // Don't cache so we always get fresh data
-    })
+    // Get auth context for permission-aware filtering
+    const authContext = await getAuthContext()
 
-    if (!response.ok) {
-      console.error('Failed to fetch observations:', response.status)
-      return []
-    }
+    // Fetch observations directly from controller (no HTTP call!)
+    const observations = await observationController.searchObjects(
+      undefined, // userId filter (undefined = all users)
+      true,      // published only for non-privileged users (controller handles this)
+      undefined  // no additional filter
+    )
 
-    const data = await response.json()
-
-    // Transform API response to match our Observation type
-    const observations: Observation[] = data.observations.map((obs: any) => ({
-      id: obs.id,
+    // Transform to UI format
+    return observations.map((obs) => ({
+      id: obs.itemId,
       description: obs.description || '',
-      location: obs.location,
-      photos: obs.imageIds?.map((img: any, index: number) => ({
+      location: obs.location ? {
+        latitude: obs.location.coordinates[1],
+        longitude: obs.location.coordinates[0]
+      } : undefined,
+      photos: obs.imageIds?.map((img, index) => ({
         id: img.id,
-        url: '', // TODO: Get actual image URLs from MinIO
+        url: `/api/images/${img.id}/file?revisionId=${img.revisionId}`,
         description: `Photo ${index + 1}`,
         location: undefined,
       })) || [],
-      createdAt: obs.createdAt,
+      createdAt: obs.createdAt?.toISOString() || new Date().toISOString(),
       createdBy: {
         id: obs.owner,
         name: 'User', // TODO: Fetch user info
       },
-      canEdit: obs.canEdit,
+      canEdit: canEditEntity(authContext.roles, obs, authContext.userId),
     }))
-
-    return observations
   } catch (error) {
     console.error('Error fetching observations:', error)
     return []
