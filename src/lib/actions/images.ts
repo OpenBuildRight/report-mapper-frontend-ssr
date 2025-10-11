@@ -1,0 +1,67 @@
+'use server'
+
+import { RevisionController } from './revision-controller'
+import { getDb } from '@/lib/db'
+import { ImageFields, ImageRevisionDocument, COLLECTIONS, ImageReference } from '@/types/models'
+import {Db} from "mongodb";
+
+/**
+ * ImageController - extends RevisionController for image management
+ */
+export class ImageController extends RevisionController<ImageFields, ImageRevisionDocument> {
+  constructor(db: Db) {
+    super(COLLECTIONS.IMAGE_REVISIONS, db)
+  }
+
+  /**
+   * Delete an image and its file from storage
+   * Overrides parent to also delete from MinIO
+   */
+  async deleteObject(itemId: string): Promise<void> {
+    // Get the image to find the imageKey for MinIO deletion
+    const image = await this.getLatestRevision(itemId)
+
+    // Delete from MinIO
+    if (image.imageKey) {
+      try {
+        const { deleteImage: deleteFromMinio } = await import('@/lib/minio')
+        await deleteFromMinio(image.imageKey)
+        console.log('Deleted image from MinIO:', image.imageKey)
+      } catch (error) {
+        console.error('Failed to delete image from MinIO:', error)
+        // Continue with database deletion even if MinIO fails
+      }
+    }
+
+    // Call parent to delete all revisions from database
+    await super.deleteObject(itemId)
+  }
+
+  /**
+   * Get multiple images by their references
+   */
+  async getImagesByReferences(imageRefs: ImageReference[]): Promise<ImageRevisionDocument[]> {
+    const images: ImageRevisionDocument[] = []
+
+    for (const ref of imageRefs) {
+      try {
+        const image = await this.getRevision(ref.id, ref.revisionId)
+        images.push(image)
+      } catch (error) {
+        console.error(`Failed to fetch image ${ref.id} revision ${ref.revisionId}:`, error)
+        // Continue with other images even if one fails
+      }
+    }
+
+    return images
+  }
+
+  /**
+   * Get image URLs for references
+   */
+  getImageUrls(imageRefs: ImageReference[]): string[] {
+    return imageRefs.map(ref =>
+      `/api/images/${ref.id}/file?revisionId=${ref.revisionId}`
+    )
+  }
+}
