@@ -85,19 +85,84 @@ class RevisionController<S, T extends RevisionDocument & S> {
         return this.db.collection(this.collectionName);
     }
 
-
-    async getLatestRevision(id: string, revisionId: number) : Promise<T> {
+    /**
+     * Lightweight method to fetch only access control fields
+     * Use this for permission checks to avoid fetching unnecessary data
+     */
+    private async getRevisionMetadata(itemId: string, revisionId: number) : Promise<RevisionDocument> {
         const collection = await this.getCollection();
-        const filter = {itemId: id}
-        const revisions = await collection.find(filter).sort({revisionId: -1}).limit(1).toArray();
+        const document = await collection.findOne(
+            { itemId, revisionId } as any,
+            {
+                projection: {
+                    itemId: 1,
+                    revisionId: 1,
+                    published: 1,
+                    submitted: 1,
+                    owner: 1,
+                    createdAt: 1,
+                    updatedAt: 1
+                }
+            }
+        );
+
+        if (!document) {
+            throw new NotFoundError(`Revision ${revisionId} not found for ${itemId}`);
+        }
+
+        return document as RevisionDocument;
+    }
+
+    /**
+     * Lightweight method to fetch latest revision metadata only
+     */
+    private async getLatestRevisionMetadata(itemId: string) : Promise<RevisionDocument> {
+        const collection = await this.getCollection();
+        const revisions = await collection
+            .find(
+                { itemId } as any,
+                {
+                    projection: {
+                        itemId: 1,
+                        revisionId: 1,
+                        published: 1,
+                        submitted: 1,
+                        owner: 1,
+                        createdAt: 1,
+                        updatedAt: 1
+                    }
+                }
+            )
+            .sort({ revisionId: -1 })
+            .limit(1)
+            .toArray();
+
         if (!revisions || revisions.length < 1) {
-            throw new NotFoundError(`No revisions found for ${id} in collection ${this.collectionName}`);
+            throw new NotFoundError(`No revisions found for ${itemId}`);
         }
+
+        return revisions[0] as RevisionDocument;
+    }
+
+    async getLatestRevision(itemId: string) : Promise<T> {
+        const collection = await this.getCollection();
+        const revisions = await collection
+            .find({ itemId } as any)
+            .sort({ revisionId: -1 })
+            .limit(1)
+            .toArray();
+
+        if (!revisions || revisions.length < 1) {
+            throw new NotFoundError(`No revisions found for ${itemId}`);
+        }
+
         const document = revisions[0] as T;
-        if (!hasReadAccess(document)) {
-            throw new NotAuthorizedError(`User does not have read access to revision ${revisionId} of ${id}`);
+
+        if (!(await hasReadAccess(document))) {
+            throw new NotAuthorizedError(`User does not have read access to ${itemId}`);
         }
-        return revisions[0] as T;
+
+        return document;
     }
 
     async createRevision(
@@ -105,11 +170,13 @@ class RevisionController<S, T extends RevisionDocument & S> {
         data: S
         ) : Promise<T> {
             // It is OK if the user included submit here. Submit is just a type of edit.
-            const collection = await this.getCollection();
-            const latestRevision = await this.getLatestRevision(id, 0);
-            if (!hasEditAccess(latestRevision)) {
+            const latestRevision = await this.getLatestRevision(id);
+
+            if (!(await hasEditAccess(latestRevision))) {
                 throw new NotAuthorizedError(`User does not have edit access to ${id}`);
             }
+
+            const collection = await this.getCollection();
             const newRevisionData = {
                 ...latestRevision,
                 ...data,
@@ -135,26 +202,201 @@ class RevisionController<S, T extends RevisionDocument & S> {
     }
 
     async submitObservation(itemId: string, revisionId: number) : Promise<T> {
-        // User edit permissions apply.
+        // Use lightweight metadata check
+        const metadata = await this.getRevisionMetadata(itemId, revisionId);
+
+        if (!(await hasEditAccess(metadata))) {
+            throw new NotAuthorizedError(`User does not have edit access to submit ${itemId}`);
+        }
+
+        const collection = await this.getCollection();
+        await collection.updateOne(
+            { itemId, revisionId } as any,
+            { $set: { submitted: true, updatedAt: new Date() } as any }
+        );
+
+        // Fetch and return the full updated document
+        return await this.getRevision(itemId, revisionId);
     }
 
-    async createObject(data: S) : T {
-        // This is for when the object does not exist yet.
+    async getRevision(itemId: string, revisionId: number) : Promise<T> {
+        const collection = await this.getCollection();
+        const document = await collection.findOne({ itemId, revisionId } as any);
+
+        if (!document) {
+            throw new NotFoundError(`Revision ${revisionId} not found for ${itemId}`);
+        }
+
+        if (!(await hasReadAccess(document))) {
+            throw new NotAuthorizedError(`User does not have read access`);
+        }
+
+        return document as T;
     }
 
-    async deleteRevision(data: S) {}
+    async createObject(data: S) : Promise<T> {
+        const authContext = await getUserAuthContext();
 
-    async deleteObject(data: S) {}
+        if (!(await hasEditAccess())) {
+            throw new NotAuthorizedError('User does not have permission to create objects');
+        }
 
-    async updateRevision(data: S) {}
+        const collection = await this.getCollection();
+        const now = new Date();
 
-    async publishRevision(data: S) {}
+        const newObject = {
+            ...data,
+            itemId: new ObjectId().toHexString(),
+            revisionId: 0,
+            published: false,
+            submitted: true,
+            owner: authContext.userId!,
+            createdAt: now,
+            updatedAt: now,
+            revisionCreatedAt: now
+        } as any;
+
+        const { _id, ...dataToInsert } = newObject;
+
+        const result = await collection.insertOne(dataToInsert as any);
+        if (!result.acknowledged) {
+            throw new Error('Failed to create object');
+        }
+
+        return {
+            ...dataToInsert,
+            _id: result.insertedId
+        } as T;
+    }
+
+    async deleteRevision(itemId: string, revisionId: number) : Promise<void> {
+        // Use lightweight metadata check
+        const metadata = await this.getRevisionMetadata(itemId, revisionId);
+
+        if (!(await hasDeleteAccess(metadata))) {
+            throw new NotAuthorizedError('User does not have permission to delete this revision');
+        }
+
+        if (metadata.published) {
+            throw new Error('Cannot delete published revision');
+        }
+
+        const collection = await this.getCollection();
+        await collection.deleteOne({ itemId, revisionId } as any);
+    }
+
+    async deleteObject(itemId: string) : Promise<void> {
+        // Use lightweight metadata check on latest revision
+        const latestMetadata = await this.getLatestRevisionMetadata(itemId);
+
+        if (!(await hasDeleteAccess(latestMetadata))) {
+            throw new NotAuthorizedError('User does not have permission to delete this object');
+        }
+
+        // Delete all revisions
+        const collection = await this.getCollection();
+        await collection.deleteMany({ itemId } as any);
+    }
+
+    async updateRevision(itemId: string, revisionId: number, data: Partial<S>) : Promise<T> {
+        // Use lightweight metadata check
+        const metadata = await this.getRevisionMetadata(itemId, revisionId);
+
+        if (!(await hasEditAccess(metadata))) {
+            throw new NotAuthorizedError('User does not have permission to edit this revision');
+        }
+
+        if (metadata.published) {
+            throw new Error('Cannot update published revision');
+        }
+
+        const collection = await this.getCollection();
+        await collection.updateOne(
+            { itemId, revisionId } as any,
+            { $set: { ...data, updatedAt: new Date() } as any }
+        );
+
+        // Fetch and return the full updated document
+        return await this.getRevision(itemId, revisionId);
+    }
+
+    async publishRevision(itemId: string, revisionId: number) : Promise<T> {
+        // Use lightweight metadata check
+        const metadata = await this.getRevisionMetadata(itemId, revisionId);
+
+        if (!(await hasPublishAccess(metadata))) {
+            throw new NotAuthorizedError('User does not have permission to publish this revision');
+        }
+
+        const collection = await this.getCollection();
+
+        // Unpublish all other revisions for this item
+        await collection.updateMany(
+            { itemId, published: true } as any,
+            { $set: { published: false, updatedAt: new Date() } as any }
+        );
+
+        // Publish this revision
+        await collection.updateOne(
+            { itemId, revisionId } as any,
+            { $set: { published: true, submitted: true, updatedAt: new Date() } as any }
+        );
+
+        // Fetch and return the full updated document
+        return await this.getRevision(itemId, revisionId);
+    }
 
     async searchObjects(
         userId?: string,
         published?: boolean,
         filter?: Filter<T>
-    ) {
-        // We will have restrictions on searches by userId and published obeservations based on permissions.
+    ) : Promise<T[]> {
+        const authContext = await getUserAuthContext();
+        const collection = await this.getCollection();
+
+        // Build base query
+        const query: Filter<T> = { ...filter } as any;
+
+        // Apply permission-based filtering
+        const hasReadAll = authContext.permissions.includes(Permission.READ_ALL_OBSERVATIONS);
+
+        if (!hasReadAll) {
+            // Non-privileged users can only see:
+            // 1. Published observations
+            // 2. Their own unpublished observations
+            const conditions: any[] = [];
+
+            if (published !== false) {
+                conditions.push({ published: true });
+            }
+
+            if (userId || authContext.userId) {
+                conditions.push({ owner: userId || authContext.userId });
+            }
+
+            if (conditions.length > 0) {
+                (query as any).$or = conditions;
+            } else {
+                // If no conditions apply, only show published
+                (query as any).published = true;
+            }
+        } else {
+            // Admins/moderators can filter by userId and published directly
+            if (userId !== undefined) {
+                query.owner = userId as any;
+            }
+            if (published !== undefined) {
+                query.published = published as any;
+            }
+        }
+
+        const results = await collection.find(query).toArray();
+
+        // Filter results based on read permissions
+        const filtered = await Promise.all(
+            results.map(async doc => (await hasReadAccess(doc)) ? doc : null)
+        );
+
+        return filtered.filter(doc => doc !== null) as T[];
     }
 }
