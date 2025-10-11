@@ -1,6 +1,7 @@
 import clientPromise from './mongodb'
 import { COLLECTIONS, UserDocument, ObservationRevisionDocument, ImageRevisionDocument } from '@/types/models'
 import { Db, Collection } from 'mongodb'
+import {config} from "@/config/env";
 
 let cachedDb: Db | null = null
 let initPromise: Promise<void> | null = null
@@ -14,7 +15,7 @@ export async function getDb(): Promise<Db> {
   }
 
   const client = await clientPromise
-  const db = client.db(process.env.MONGODB_DATABASE || 'reportmapper')
+  const db = client.db(config.mongodb.database)
   cachedDb = db
 
   // Initialize database indexes on first access (idempotent)

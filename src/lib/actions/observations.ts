@@ -8,8 +8,8 @@ import {Db, Filter} from 'mongodb'
  * ObservationController - extends RevisionController with geo search
  */
 export class ObservationController extends RevisionController<ObservationFields, ObservationRevisionDocument> {
-  constructor(db: Db) {
-    super(COLLECTIONS.OBSERVATION_REVISIONS, db)
+  constructor() {
+    super(COLLECTIONS.OBSERVATION_REVISIONS)
   }
 
   /**

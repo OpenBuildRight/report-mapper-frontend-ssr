@@ -4,6 +4,7 @@ import { Collection, Db, Filter, ObjectId } from "mongodb"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Permission, Role, ROLE_PERMISSIONS } from "@/types/rbac"
+import {getDb} from "@/lib/db";
 
 export interface RevisionDocument {
     _id?: ObjectId
@@ -94,18 +95,16 @@ async function hasPublishAccess(document: RevisionDocument): Promise<boolean> {
 export class RevisionController<S, T extends RevisionDocument & S> {
 
     private collectionName: string;
-    private db: Db;
 
     constructor(
         collectionName: string,
-        db: Db
     ) {
         this.collectionName = collectionName;
-        this.db = db;
     }
 
     async getCollection() : Promise<Collection<T>> {
-        return this.db.collection(this.collectionName);
+        const db = await getDb();
+        return db.collection(this.collectionName);
     }
 
     /**

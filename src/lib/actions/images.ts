@@ -9,8 +9,8 @@ import {Db} from "mongodb";
  * ImageController - extends RevisionController for image management
  */
 export class ImageController extends RevisionController<ImageFields, ImageRevisionDocument> {
-  constructor(db: Db) {
-    super(COLLECTIONS.IMAGE_REVISIONS, db)
+  constructor() {
+    super(COLLECTIONS.IMAGE_REVISIONS)
   }
 
   /**

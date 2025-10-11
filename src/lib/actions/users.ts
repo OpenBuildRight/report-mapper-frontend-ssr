@@ -12,17 +12,12 @@ class NotAuthorizedError extends Error {}
  * UserController - manages users and their roles (not versioned)
  */
 export class UserController {
-    private db: Db;
     private collectionName = COLLECTIONS.USERS;
-
-    constructor(db: Db) {
-        this.db = db;
-
-    }
 
 
     private async getCollection(): Promise<Collection<UserDocument>> {
-    return this.db.collection(this.collectionName)
+        const db = await getDb();
+        return db.collection(this.collectionName)
   }
 
   private async requireAdminPermission(): Promise<void> {
