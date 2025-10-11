@@ -104,6 +104,7 @@ class RevisionController<S, T extends RevisionDocument & S> {
         id: string,
         data: S
         ) : Promise<T> {
+            // It is OK if the user included submit here. Submit is just a type of edit.
             const collection = await this.getCollection();
             const latestRevision = await this.getLatestRevision(id, 0);
             if (!hasEditAccess(latestRevision)) {
@@ -115,7 +116,6 @@ class RevisionController<S, T extends RevisionDocument & S> {
                 itemId: id,
                 revisionId: latestRevision.revisionId + 1,
                 published: false,
-                submitted: true,
                 updatedAt: Date.now()
             }
 
@@ -134,7 +134,12 @@ class RevisionController<S, T extends RevisionDocument & S> {
             } as T;
     }
 
+    async submitObservation(itemId: string, revisionId: number) : Promise<T> {
+        // User edit permissions apply.
+    }
+
     async createObject(data: S) : T {
+        // This is for when the object does not exist yet.
     }
 
     async deleteRevision(data: S) {}
