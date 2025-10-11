@@ -8,14 +8,15 @@ import {authOptions} from "@/lib/auth";
 import {Permission, Role, ROLE_PERMISSIONS} from "@/types/rbac";
 
 interface RevisionDocument {
-    _id: ObjectId
+    _id?: ObjectId
     itemId: string
     revisionId: number
     published: boolean
     submitted: boolean
     owner: string
-    createdAt: Date
-    updated_At: Date
+    createdAt?: Date
+    updatedAt?: Date
+    revisionCreatedAt?: Date
 }
 
 class NotFoundError extends Error {}
@@ -88,7 +89,7 @@ class RevisionController<S, T extends RevisionDocument & S> {
     async getLatestRevision(id: string, revisionId: number) : Promise<T> {
         const collection = await this.getCollection();
         const filter = {itemId: id}
-        const revisions = await collection.find(filter).sort({revision_id: -1}).limit(1).toArray();
+        const revisions = await collection.find(filter).sort({revisionId: -1}).limit(1).toArray();
         if (!revisions || revisions.length < 1) {
             throw new NotFoundError(`No revisions found for ${id} in collection ${this.collectionName}`);
         }
@@ -108,19 +109,47 @@ class RevisionController<S, T extends RevisionDocument & S> {
             if (!hasEditAccess(latestRevision)) {
                 throw new NotAuthorizedError(`User does not have edit access to ${id}`);
             }
-            const newRevision : T = {
+            const newRevisionData = {
                 ...latestRevision,
                 ...data,
-                _id: new ObjectId(),
                 itemId: id,
                 revisionId: latestRevision.revisionId + 1,
                 published: false,
                 submitted: true,
-            } as T
-            const result : InsertOneResult<T> = await collection.insertOne(newRevision);
+                updatedAt: Date.now()
+            }
+
+            // Remove _id from the data to insert (MongoDB will generate it)
+            const { _id, ...dataToInsert } = newRevisionData
+
+            const result = await collection.insertOne(dataToInsert as any);
             if (!result.acknowledged) {
                 throw new Error(`Failed to create revision for ${id}`);
             }
-            return newRevision as T;
+
+            // Return what we inserted plus the generated _id
+            return {
+                ...dataToInsert,
+                _id: result.insertedId
+            } as T;
+    }
+
+    async createObject(data: S) : T {
+    }
+
+    async deleteRevision(data: S) {}
+
+    async deleteObject(data: S) {}
+
+    async updateRevision(data: S) {}
+
+    async publishRevision(data: S) {}
+
+    async searchObjects(
+        userId?: string,
+        published?: boolean,
+        filter?: Filter<T>
+    ) {
+        // We will have restrictions on searches by userId and published obeservations based on permissions.
     }
 }
