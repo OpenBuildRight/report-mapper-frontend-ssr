@@ -1,4 +1,5 @@
 import { Client } from 'minio'
+import { config } from '@/config/env'
 
 let minioClient: Client | null = null
 
@@ -7,10 +8,10 @@ let minioClient: Client | null = null
  */
 export function getMinioClient(): Client {
   if (!minioClient) {
-    const endpoint = process.env.MINIO_ENDPOINT || 'localhost:9000'
-    const accessKey = process.env.MINIO_ACCESS_KEY || 'minio_root_user'
-    const secretKey = process.env.MINIO_SECRET_KEY || 'minio_root_password'
-    const useSSL = process.env.MINIO_USE_SSL === 'true'
+    const endpoint = config.minio.endpoint
+    const accessKey = config.minio.accessKey
+    const secretKey = config.minio.secretKey
+    const useSSL = config.minio.useSSL
 
     // Parse endpoint into host and port
     const [endPoint, portStr] = endpoint.split(':')
@@ -46,24 +47,6 @@ export async function ensureBucket(): Promise<void> {
 
   if (!exists) {
     await client.makeBucket(bucketName, 'us-east-1')
-    console.log(`Created MinIO bucket: ${bucketName}`)
-
-    // Set bucket policy to allow public read access (for development)
-    // In production, you might want more restrictive policies
-    const policy = {
-      Version: '2012-10-17',
-      Statement: [
-        {
-          Effect: 'Allow',
-          Principal: { AWS: ['*'] },
-          Action: ['s3:GetObject'],
-          Resource: [`arn:aws:s3:::${bucketName}/*`],
-        },
-      ],
-    }
-
-    await client.setBucketPolicy(bucketName, JSON.stringify(policy))
-    console.log(`Set public read policy for bucket: ${bucketName}`)
   }
 }
 

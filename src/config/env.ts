@@ -30,6 +30,13 @@ interface AppConfig {
         uri: string
         database: string
     }
+
+    minio: {
+        endpoint: string
+        accessKey: string
+        secretKey: string
+        useSSL: boolean
+    }
 }
 
 function getRequiredEnv(key: string): string {
@@ -66,6 +73,12 @@ export function getConfig(): AppConfig {
         mongodb: {
             uri: getRequiredEnv('MONGODB_URI'),
             database: getOptionalEnv('MONGODB_DATABASE', 'reportmapper')
+        },
+        minio: {
+            endpoint: getRequiredEnv('MINIO_ENDPOINT'),
+            accessKey: getRequiredEnv('MINIO_ACCESS_KEY'),
+            secretKey: getRequiredEnv('MINIO_SECRET_KEY'),
+            useSSL: getOptionalEnv('MINIO_USE_SSL', 'false') === 'true'
         }
     }
 }

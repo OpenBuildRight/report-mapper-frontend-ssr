@@ -1,17 +1,13 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { handle } from 'hono/vercel'
 import { swaggerUI } from '@hono/swagger-ui'
-import { observationsApp } from '@/lib/hono/routes/observations'
 import { imagesApp } from '@/lib/hono/routes/images'
-import { adminApp } from '@/lib/hono/routes/admin'
 
 // Create the main Hono app with OpenAPI support
 const app = new OpenAPIHono().basePath('/api')
 
 // Mount route modules
-app.route('/', observationsApp)
 app.route('/', imagesApp)
-app.route('/', adminApp)
 
 // Health check
 app.get('/health', (c) => {

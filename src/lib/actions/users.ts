@@ -81,7 +81,7 @@ export class UserController {
         { id: userId },
         {
           $addToSet: { roles: role },
-          $set: { updated_at: new Date() }
+          $set: { updatedAt: new Date() }
         }
       )
     }
@@ -104,7 +104,7 @@ export class UserController {
       { id: userId },
       {
         $pull: { roles: role },
-        $set: { updated_at: new Date() }
+        $set: { updatedAt: new Date() }
       }
     )
   }
@@ -127,7 +127,7 @@ export class UserController {
       {
         $set: {
           roles: roles,
-          updated_at: new Date()
+          updatedAt: new Date()
         }
       }
     )
@@ -160,10 +160,10 @@ export class UserController {
       id: data.id,
       email: data.email,
       name: data.name,
-      password_hash: data.password_hash,
+      passwordHash: data.password_hash,
       roles: data.roles || [Role.AUTHENTICATED_USER],
-      created_at: now,
-      updated_at: now
+      createdAt: now,
+      updatedAt: now
     }
 
     const result = await collection.insertOne(user as any)
@@ -200,7 +200,7 @@ export class UserController {
       {
         $set: {
           ...data,
-          updated_at: new Date()
+          updatedAt: new Date()
         }
       }
     )

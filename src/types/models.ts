@@ -58,10 +58,10 @@ export interface UserDocument {
   id: string // UUID
   email: string
   name: string
-  password_hash?: string // For local auth
+  passwordHash?: string // For local auth
   roles: string[] // Role enum values
-  created_at: Date
-  updated_at: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 // Collection names

@@ -1,9 +1,8 @@
 'use server'
 
 import { RevisionController } from './revision-controller'
-import { getDb } from '@/lib/db'
 import { ImageFields, ImageRevisionDocument, COLLECTIONS, ImageReference } from '@/types/models'
-import {Db} from "mongodb";
+import {deleteImage} from "@/lib/minio";
 
 /**
  * ImageController - extends RevisionController for image management
@@ -24,8 +23,7 @@ export class ImageController extends RevisionController<ImageFields, ImageRevisi
     // Delete from MinIO
     if (image.imageKey) {
       try {
-        const { deleteImage: deleteFromMinio } = await import('@/lib/minio')
-        await deleteFromMinio(image.imageKey)
+        await deleteImage(image.imageKey)
         console.log('Deleted image from MinIO:', image.imageKey)
       } catch (error) {
         console.error('Failed to delete image from MinIO:', error)

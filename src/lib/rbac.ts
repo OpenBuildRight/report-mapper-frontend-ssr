@@ -9,7 +9,6 @@ export {
   canDeleteEntity as canDeleteObservation,
   canPublishEntity as canPublishObservation,
   getAutomaticRoles,
-  isRootUser,
   getAllRoles,
 } from './rbac-generic'
 
