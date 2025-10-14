@@ -1,8 +1,14 @@
 'use server'
 
 import { RevisionController } from './revision-controller'
-import { ImageFields, ImageRevisionDocument, COLLECTIONS, ImageReference } from '@/types/models'
-import {deleteImage} from "@/lib/minio";
+import {
+    ImageFields,
+    ImageRevisionDocument,
+    COLLECTIONS,
+    ImageReference,
+    ImageRevisionDocumentWithUrls
+} from '@/types/models'
+import {deleteImage, getImageUrl, getMinioClient} from "@/lib/minio";
 
 /**
  * ImageController - extends RevisionController for image management
@@ -10,6 +16,17 @@ import {deleteImage} from "@/lib/minio";
 export class ImageController extends RevisionController<ImageFields, ImageRevisionDocument> {
   constructor() {
     super(COLLECTIONS.IMAGE_REVISIONS)
+  }
+
+  async getRevisionWithUrl(
+      itemId: string,
+      revisionId: number,
+  ) : Promise<ImageRevisionDocumentWithUrls> {
+      let revision = await this.getRevision(itemId, revisionId)
+      return {
+          ...revision,
+          presignedUrl: await getImageUrl(revision.imageKey)
+      }
   }
 
   /**

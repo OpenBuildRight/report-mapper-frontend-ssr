@@ -13,6 +13,10 @@ export interface RevisionDocument {
   revisionCreatedAt?: Date
 }
 
+export interface ImageRevisionDocumentWithUrls extends RevisionDocument {
+    presignedUrl: string
+}
+
 /**
  * Image-specific fields
  */

@@ -36,6 +36,8 @@ interface AppConfig {
         accessKey: string
         secretKey: string
         useSSL: boolean
+        imageExpirySeconds: number
+        bucketName: string
     }
 }
 
@@ -78,7 +80,9 @@ export function getConfig(): AppConfig {
             endpoint: getRequiredEnv('MINIO_ENDPOINT'),
             accessKey: getRequiredEnv('MINIO_ACCESS_KEY'),
             secretKey: getRequiredEnv('MINIO_SECRET_KEY'),
-            useSSL: getOptionalEnv('MINIO_USE_SSL', 'false') === 'true'
+            useSSL: getOptionalEnv('MINIO_USE_SSL', 'false') === 'true',
+            imageExpirySeconds: Number(getOptionalEnv('MINIO_IMAGE_EXPIRY_SECONDS', '3600')),
+            bucketName: getOptionalEnv('MINIO_BUCKET_NAME', 'reportmapper')
         }
     }
 }
