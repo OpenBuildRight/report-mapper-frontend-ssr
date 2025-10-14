@@ -1,41 +1,61 @@
 import HomePage from '@/components/HomePage'
-import { Observation } from '@/types/observation'
+import {Observation} from '@/types/observation'
+import {ObservationController} from '@/lib/actions/observations'
+import {getAuthContext} from '@/lib/middleware/auth'
+import {canEditEntity} from '@/lib/rbac-generic'
+import {ImageController} from "@/lib/actions/images";
+import {Image} from "@auth/core/providers/42-school";
+import {ImageRevisionDocumentWithUrls} from "@/types/models";
 
-// TODO: Fetch observations from API
-// For now using mock data
-const mockObservations: Observation[] = [
-  {
-    id: '1',
-    description: 'Beautiful sunset observation near Madison, Wisconsin',
-    location: {
-      latitude: 43.0731,
-      longitude: -89.4012,
-    },
-    photos: [
-      {
-        id: 'p1',
-        url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500',
-        description: 'Main sunset view from the observation point',
-        location: {
-          latitude: 43.0731,
-          longitude: -89.4012,
-        },
-      },
-      {
-        id: 'p2',
-        url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500',
-        description: 'Close-up of the sun',
-      },
-    ],
-    createdAt: '2025-01-15T18:30:00Z',
-    createdBy: {
-      id: 'user1',
-      name: 'John Doe',
-    },
-    canEdit: false,
-  },
-]
+async function getObservations(): Promise<Observation[]> {
+    try {
+        // Get auth context for permission-aware filtering
+        const authContext = await getAuthContext()
+        const observationController = new ObservationController()
+        const imageController = new ImageController()
 
-export default function Home() {
-  return <HomePage observations={mockObservations} />
+        // Fetch observations directly from controller (no HTTP call!)
+        const observations = await observationController.searchObjects(
+            undefined, // userId filter (undefined = all users)
+            true,      // published only for non-privileged users (controller handles this)
+            undefined  // no additional filter
+        )
+
+        // Transform to UI format
+        return observations.map((obs) => ({
+            id: obs.itemId,
+            description: obs.description || '',
+            location: obs.location ? {
+                latitude: obs.location.coordinates[1],
+                longitude: obs.location.coordinates[0]
+            } : undefined,
+            photos: obs.imageIds?.map((img, index) => {
+                const image: ImageRevisionDocumentWithUrls = await imageController.getRevisionWithUrl(img.id, img.revisionId);
+
+                return {
+                    id: img.id,
+                    url: image.presignedUrl,
+                    description: image.description,
+                    location: {
+                        latitude: image.location?.coordinates[1],
+                        longitude: image.location?.coordinates[0]
+                    },
+                }
+            }) || [],
+            createdAt: obs.createdAt?.toISOString() || new Date().toISOString(),
+            createdBy: {
+                id: obs.owner,
+            },
+            canEdit: canEditEntity(authContext.roles, obs, authContext.userId),
+        }))
+    } catch (error) {
+        console.error('Error fetching observations:', error)
+        return []
+    }
+}
+
+export default async function Home() {
+    const observations = await getObservations()
+
+    return <HomePage observations={observations}/>
 }

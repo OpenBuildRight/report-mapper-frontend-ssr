@@ -64,28 +64,49 @@ export default function ObservationForm() {
     setIsSubmitting(true)
 
     try {
-      const formDataToSend = new FormData()
+      // Step 1: Upload each photo to /api/images
+      const imageIds: { id: string; revision_id: number }[] = []
 
-      formDataToSend.append('description', formData.description)
-
-      if (formData.location) {
-        formDataToSend.append('latitude', formData.location.latitude.toString())
-        formDataToSend.append('longitude', formData.location.longitude.toString())
-      }
-
-      formData.photos.forEach((photo, index) => {
-        formDataToSend.append(`photos[${index}]`, photo.file)
-        formDataToSend.append(`photoDescriptions[${index}]`, photo.description)
+      for (const photo of formData.photos) {
+        const photoFormData = new FormData()
+        photoFormData.append('file', photo.file)
+        photoFormData.append('description', photo.description)
 
         if (photo.location) {
-          formDataToSend.append(`photoLatitudes[${index}]`, photo.location.latitude.toString())
-          formDataToSend.append(`photoLongitudes[${index}]`, photo.location.longitude.toString())
+          photoFormData.append('latitude', photo.location.latitude.toString())
+          photoFormData.append('longitude', photo.location.longitude.toString())
         }
-      })
+
+        const imageResponse = await fetch('/api/images', {
+          method: 'POST',
+          body: photoFormData
+        })
+
+        if (!imageResponse.ok) {
+          throw new Error('Failed to upload photo')
+        }
+
+        const imageResult = await imageResponse.json()
+        imageIds.push({
+          id: imageResult.id,
+          revision_id: imageResult.revisionId
+        })
+      }
+
+      // Step 2: Create observation with image references
+      const observationData = {
+        description: formData.description,
+        location: formData.location,
+        imageIds,
+        submitted: true, // Mark as submitted for moderator review
+      }
 
       const response = await fetch('/api/observations', {
         method: 'POST',
-        body: formDataToSend
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(observationData)
       })
 
       if (!response.ok) {

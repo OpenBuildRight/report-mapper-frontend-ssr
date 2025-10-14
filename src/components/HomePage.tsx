@@ -11,7 +11,7 @@ interface HomePageProps {
 
 export default function HomePage({ observations }: HomePageProps) {
   return (
-    <div className="h-screen w-full">
+    <div className="w-full" style={{ height: 'calc(100vh - 4rem)' }}>
       <ObservationMap observations={observations} />
     </div>
   )

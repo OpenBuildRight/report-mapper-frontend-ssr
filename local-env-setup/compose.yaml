@@ -40,6 +40,20 @@ services:
       - mongodb
     networks:
       - report-mapper-network
+  minio:
+    container_name: report-mapper-minio
+    image: minio/minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio_root_user
+      MINIO_ROOT_PASSWORD: minio_root_password
+    command: server /data --console-address ":9001"
+    networks:
+      - report-mapper-network
+
 networks:
   report-mapper-network:
     driver: bridge

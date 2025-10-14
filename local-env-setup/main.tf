@@ -32,11 +32,17 @@ resource "keycloak_openid_client" "openid_client" {
   valid_redirect_uris = [
     "http://localhost:3000/api/auth/callback/keycloak",
     "http://127.0.0.1:3000/api/auth/callback/keycloak",
+    "http://localhost:3000/oauth2-redirect.html",
+    "http://127.0.0.1:3000/oauth2-redirect.html",
+    "http://localhost:3001/oauth2-redirect.html",
+    "http://127.0.0.1:3001/oauth2-redirect.html",
   ]
 
   web_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
   ]
 
   login_theme = "keycloak"
@@ -65,6 +71,21 @@ resource "keycloak_user" "user_with_initial_password" {
   }
 }
 
+# Admin user (machine user with all permissions)
+resource "keycloak_user" "admin_user" {
+  realm_id   = keycloak_realm.this.id
+  username   = "admin"
+  enabled    = true
+
+  email      = "admin@example.com"
+  first_name = "Admin"
+  last_name  = "User"
+
+  initial_password {
+    value     = "admin_password"
+  }
+}
+
 output "keycloak_client_secret" {
   value = keycloak_openid_client.openid_client.client_secret
   description = "Client secret for local development (not sensitive for local env)"
@@ -79,4 +100,14 @@ output "keycloak_issuer" {
 output "keycloak_client_id" {
   value = keycloak_openid_client.openid_client.client_id
   description = "Keycloak client ID"
+}
+
+output "admin_user_id" {
+  value = keycloak_user.admin_user.id
+  description = "Admin user UUID (used in ADMIN_USER_ID env var)"
+}
+
+output "dev_user_id" {
+  value = keycloak_user.user_with_initial_password.id
+  description = "Dev user UUID (alice)"
 }

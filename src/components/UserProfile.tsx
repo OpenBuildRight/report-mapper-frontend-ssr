@@ -1,13 +1,30 @@
 'use client'
 
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Button from './Button'
 import {LoginIcon} from "@/components/icons/LoginIcon";
 
 export default function UserProfile() {
   const { data: session, status } = useSession()
   const [showDetails, setShowDetails] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDetails(false)
+      }
+    }
+
+    if (showDetails) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showDetails])
 
   if (status === 'loading') {
     return <Button variant="secondary" disabled>Loading...</Button>
@@ -18,7 +35,7 @@ export default function UserProfile() {
     localStorage.clear()
     sessionStorage.clear()
 
-    // Sign out and redirect to home
+    // Sign out from NextAuth - this clears the session from MongoDB and the session cookie
     await signOut({ callbackUrl: '/' })
   }
 
@@ -35,7 +52,7 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <Button
         onClick={() => setShowDetails(!showDetails)}
         variant="secondary"
@@ -44,7 +61,7 @@ export default function UserProfile() {
       </Button>
 
       {showDetails && (
-        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-lg z-50 border border-gray-700">
+        <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-xl z-[10000] border border-gray-700">
           <div className="p-4">
             <h3 className="text-lg font-bold text-gray-100 mb-3">Profile Information</h3>
 
@@ -60,6 +77,22 @@ export default function UserProfile() {
                 <div className="flex flex-col">
                   <span className="font-semibold text-gray-400">Email:</span>
                   <span className="text-gray-200">{session.user.email}</span>
+                </div>
+              )}
+
+              {session.user?.roles && session.user.roles.length > 0 && (
+                <div className="flex flex-col">
+                  <span className="font-semibold text-gray-400">Roles:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {session.user.roles.map((role) => (
+                      <span
+                        key={role}
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-900 text-blue-200"
+                      >
+                        {role}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
