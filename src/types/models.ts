@@ -13,7 +13,7 @@ export interface RevisionDocument {
   revisionCreatedAt?: Date
 }
 
-export interface ImageRevisionDocumentWithUrls extends RevisionDocument {
+export interface ImageRevisionDocumentWithUrls extends ImageRevisionDocument {
     presignedUrl: string
 }
 
