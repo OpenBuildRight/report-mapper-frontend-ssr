@@ -141,3 +141,7 @@ You can start storbybook with the following.
 ```shell
 pnpm storybook
 ```
+
+## Submitting a Pull Request
+In order to submit a pull request, fork the repository into your personal namespace and then create a feature from the 
+main branch. When you are ready, submit a pull request to the main branch.
