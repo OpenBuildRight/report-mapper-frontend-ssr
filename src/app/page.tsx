@@ -4,7 +4,6 @@ import {ObservationController} from '@/lib/actions/observations'
 import {getAuthContext} from '@/lib/middleware/auth'
 import {canEditEntity} from '@/lib/rbac-generic'
 import {ImageController} from "@/lib/actions/images";
-import {Image} from "@auth/core/providers/42-school";
 import {ImageRevisionDocumentWithUrls} from "@/types/models";
 
 async function getObservations(): Promise<Observation[]> {
