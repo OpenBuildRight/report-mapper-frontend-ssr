@@ -1,83 +1,83 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import ClusterMarker from './ClusterMarker'
+import type { Meta, StoryObj } from "@storybook/react";
+import ClusterMarker from "./ClusterMarker";
 
 const meta: Meta<typeof ClusterMarker> = {
-  title: 'Icons/ClusterMarker',
+  title: "Icons/ClusterMarker",
   component: ClusterMarker,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     backgrounds: {
-      default: 'dark',
+      default: "dark",
     },
   },
-  tags: ['autodocs'],
-}
+  tags: ["autodocs"],
+};
 
-export default meta
-type Story = StoryObj<typeof ClusterMarker>
+export default meta;
+type Story = StoryObj<typeof ClusterMarker>;
 
 export const SmallCluster: Story = {
   args: {
     count: 3,
   },
-}
+};
 
 export const MediumCluster: Story = {
   args: {
     count: 15,
   },
-}
+};
 
 export const LargeCluster: Story = {
   args: {
     count: 127,
   },
-}
+};
 
 export const SingleDigit: Story = {
   args: {
     count: 5,
-    color: '#3b82f6',
+    color: "#3b82f6",
   },
-}
+};
 
 export const DoubleDigit: Story = {
   args: {
     count: 42,
-    color: '#8b5cf6',
+    color: "#8b5cf6",
   },
-}
+};
 
 export const TripleDigit: Story = {
   args: {
     count: 999,
-    color: '#ef4444',
+    color: "#ef4444",
   },
-}
+};
 
 export const CustomSize: Story = {
   args: {
     count: 8,
     size: 60,
-    color: '#10b981',
+    color: "#10b981",
   },
-}
+};
 
 export const CustomColors: Story = {
   args: {
     count: 12,
     size: 50,
-    color: '#ec4899',
-    textColor: '#fef3c7',
+    color: "#ec4899",
+    textColor: "#fef3c7",
   },
-}
+};
 
 export const Clickable: Story = {
   args: {
     count: 7,
-    onClick: () => alert('Cluster clicked!'),
+    onClick: () => alert("Cluster clicked!"),
   },
-}
+};
 
 export const CountProgression: Story = {
   render: () => (
@@ -89,7 +89,7 @@ export const CountProgression: Story = {
       <ClusterMarker count={156} color="#ef4444" />
     </div>
   ),
-}
+};
 
 export const DifferentColors: Story = {
   render: () => (
@@ -103,7 +103,7 @@ export const DifferentColors: Story = {
       <ClusterMarker count={30} color="#ec4899" />
     </div>
   ),
-}
+};
 
 export const DifferentSizes: Story = {
   render: () => (
@@ -115,7 +115,7 @@ export const DifferentSizes: Story = {
       <ClusterMarker count={10} size={70} color="#3b82f6" />
     </div>
   ),
-}
+};
 
 export const HeatmapStyle: Story = {
   render: () => (
@@ -138,26 +138,38 @@ export const HeatmapStyle: Story = {
       </div>
     </div>
   ),
-}
+};
 
 export const MapExample: Story = {
   render: () => (
     <div className="flex gap-8 items-center flex-wrap">
       <div className="flex flex-col items-center gap-2">
-        <ClusterMarker count={5} color="#3b82f6" onClick={() => alert('Zoom to cluster')} />
+        <ClusterMarker
+          count={5}
+          color="#3b82f6"
+          onClick={() => alert("Zoom to cluster")}
+        />
         <span className="text-xs text-gray-400">Click to zoom</span>
       </div>
       <div className="flex flex-col items-center gap-2">
-        <ClusterMarker count={15} color="#8b5cf6" onClick={() => alert('Zoom to cluster')} />
+        <ClusterMarker
+          count={15}
+          color="#8b5cf6"
+          onClick={() => alert("Zoom to cluster")}
+        />
         <span className="text-xs text-gray-400">Click to zoom</span>
       </div>
       <div className="flex flex-col items-center gap-2">
-        <ClusterMarker count={89} color="#ef4444" onClick={() => alert('Zoom to cluster')} />
+        <ClusterMarker
+          count={89}
+          color="#ef4444"
+          onClick={() => alert("Zoom to cluster")}
+        />
         <span className="text-xs text-gray-400">Click to zoom</span>
       </div>
     </div>
   ),
-}
+};
 
 export const WithBadge: Story = {
   render: () => (
@@ -168,4 +180,4 @@ export const WithBadge: Story = {
       </span>
     </div>
   ),
-}
+};

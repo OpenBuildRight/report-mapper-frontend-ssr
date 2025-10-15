@@ -1,59 +1,68 @@
-import { getServerSession } from 'next-auth'
-import { redirect } from 'next/navigation'
-import { authOptions } from '@/lib/auth'
-import { hasPermission } from '@/lib/rbac'
-import { Permission } from '@/types/rbac'
-import Link from 'next/link'
-import Button from '@/components/Button'
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import Button from "@/components/Button";
+import { authOptions } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
+import { Permission } from "@/types/rbac";
 
 async function getPendingObservations() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-    const response = await fetch(`${baseUrl}/api/observations?submitted=true&published=false&sortBy=revisionCreated&sortOrder=desc`, {
-      cache: 'no-store',
-    })
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const response = await fetch(
+      `${baseUrl}/api/observations?submitted=true&published=false&sortBy=revisionCreated&sortOrder=desc`,
+      {
+        cache: "no-store",
+      },
+    );
 
     if (!response.ok) {
-      console.error('Failed to fetch pending observations:', response.status)
-      return []
+      console.error("Failed to fetch pending observations:", response.status);
+      return [];
     }
 
-    const data = await response.json()
-    return data.observations
+    const data = await response.json();
+    return data.observations;
   } catch (error) {
-    console.error('Error fetching pending observations:', error)
-    return []
+    console.error("Error fetching pending observations:", error);
+    return [];
   }
 }
 
 export default async function ReviewPage() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect('/api/auth/signin')
+    redirect("/api/auth/signin");
   }
 
   // Check if user has permission to review observations
   // Roles are already populated in the session from user_roles collection
-  const canReview = hasPermission(session.user.roles, Permission.READ_ALL_OBSERVATIONS)
+  const canReview = hasPermission(
+    session.user.roles,
+    Permission.READ_ALL_OBSERVATIONS,
+  );
 
   if (!canReview) {
     return (
       <div className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center">
         <div className="max-w-md mx-auto p-8 bg-gray-800 rounded-lg border border-gray-700">
-          <h1 className="text-2xl font-bold text-red-400 mb-4">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-red-400 mb-4">
+            Access Denied
+          </h1>
           <p className="text-gray-300 mb-6">
-            You don't have permission to review observations. Only moderators can access this page.
+            You don't have permission to review observations. Only moderators
+            can access this page.
           </p>
           <Link href="/">
             <Button variant="primary">Return to Home</Button>
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
-  const pendingObservations = await getPendingObservations()
+  const pendingObservations = await getPendingObservations();
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
@@ -61,7 +70,9 @@ export default async function ReviewPage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-100">Review Observations</h1>
+              <h1 className="text-3xl font-bold text-gray-100">
+                Review Observations
+              </h1>
               <p className="text-gray-400 mt-2">
                 Review and publish submitted observations
               </p>
@@ -74,11 +85,23 @@ export default async function ReviewPage() {
           {pendingObservations.length === 0 ? (
             <div className="bg-gray-800 rounded-lg border border-gray-700 p-12 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-900 rounded-full mb-4">
-                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-8 h-8 text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-200 mb-2">All Caught Up!</h2>
+              <h2 className="text-xl font-semibold text-gray-200 mb-2">
+                All Caught Up!
+              </h2>
               <p className="text-gray-400">
                 There are no pending observations to review at this time.
               </p>
@@ -102,7 +125,7 @@ export default async function ReviewPage() {
                       </div>
 
                       <h3 className="text-lg font-semibold text-gray-100 mb-2">
-                        {obs.description || 'No description'}
+                        {obs.description || "No description"}
                       </h3>
 
                       <div className="grid grid-cols-2 gap-4 text-sm">
@@ -110,7 +133,8 @@ export default async function ReviewPage() {
                           <div>
                             <span className="text-gray-500">Location: </span>
                             <span className="text-gray-300">
-                              {obs.location.latitude.toFixed(4)}, {obs.location.longitude.toFixed(4)}
+                              {obs.location.latitude.toFixed(4)},{" "}
+                              {obs.location.longitude.toFixed(4)}
                             </span>
                           </div>
                         )}
@@ -123,23 +147,23 @@ export default async function ReviewPage() {
                         <div>
                           <span className="text-gray-500">Submitted: </span>
                           <span className="text-gray-300">
-                            {new Date(obs.revisionCreatedAt).toLocaleDateString()}
+                            {new Date(
+                              obs.revisionCreatedAt,
+                            ).toLocaleDateString()}
                           </span>
                         </div>
                         <div>
                           <span className="text-gray-500">Owner: </span>
-                          <span className="text-gray-300">
-                            {obs.owner}
-                          </span>
+                          <span className="text-gray-300">{obs.owner}</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="ml-6">
-                      <Link href={`/review/${obs.id}?revision=${obs.revisionId}`}>
-                        <Button variant="primary">
-                          Review
-                        </Button>
+                      <Link
+                        href={`/review/${obs.id}?revision=${obs.revisionId}`}
+                      >
+                        <Button variant="primary">Review</Button>
                       </Link>
                     </div>
                   </div>
@@ -150,5 +174,5 @@ export default async function ReviewPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,80 +1,80 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import MapMarkerWithLabel from './MapMarkerWithLabel'
+import type { Meta, StoryObj } from "@storybook/react";
+import MapMarkerWithLabel from "./MapMarkerWithLabel";
 
 const meta: Meta<typeof MapMarkerWithLabel> = {
-  title: 'Icons/MapMarkerWithLabel',
+  title: "Icons/MapMarkerWithLabel",
   component: MapMarkerWithLabel,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     backgrounds: {
-      default: 'dark',
+      default: "dark",
     },
   },
-  tags: ['autodocs'],
-}
+  tags: ["autodocs"],
+};
 
-export default meta
-type Story = StoryObj<typeof MapMarkerWithLabel>
+export default meta;
+type Story = StoryObj<typeof MapMarkerWithLabel>;
 
 export const WithNumber: Story = {
   args: {
     label: 1,
     size: 48,
-    color: '#ef4444',
+    color: "#ef4444",
   },
-}
+};
 
 export const WithText: Story = {
   args: {
-    label: 'A',
+    label: "A",
     size: 48,
-    color: '#3b82f6',
+    color: "#3b82f6",
   },
-}
+};
 
 export const TwoDigitNumber: Story = {
   args: {
     label: 42,
     size: 48,
-    color: '#10b981',
+    color: "#10b981",
   },
-}
+};
 
 export const LongText: Story = {
   args: {
-    label: 'AB',
+    label: "AB",
     size: 56,
-    color: '#8b5cf6',
-    labelSize: 'sm',
+    color: "#8b5cf6",
+    labelSize: "sm",
   },
-}
+};
 
 export const SmallLabel: Story = {
   args: {
     label: 5,
     size: 48,
-    color: '#f97316',
-    labelSize: 'sm',
+    color: "#f97316",
+    labelSize: "sm",
   },
-}
+};
 
 export const LargeLabel: Story = {
   args: {
     label: 9,
     size: 48,
-    color: '#ec4899',
-    labelSize: 'lg',
+    color: "#ec4899",
+    labelSize: "lg",
   },
-}
+};
 
 export const CustomLabelColor: Story = {
   args: {
-    label: '★',
+    label: "★",
     size: 48,
-    color: '#eab308',
-    labelColor: '#000000',
+    color: "#eab308",
+    labelColor: "#000000",
   },
-}
+};
 
 export const NumberedSequence: Story = {
   render: () => (
@@ -86,7 +86,7 @@ export const NumberedSequence: Story = {
       <MapMarkerWithLabel label={5} size={40} color="#3b82f6" />
     </div>
   ),
-}
+};
 
 export const AlphabetSequence: Story = {
   render: () => (
@@ -98,7 +98,7 @@ export const AlphabetSequence: Story = {
       <MapMarkerWithLabel label="E" size={40} color="#3b82f6" />
     </div>
   ),
-}
+};
 
 export const DifferentSizes: Story = {
   render: () => (
@@ -110,7 +110,7 @@ export const DifferentSizes: Story = {
       <MapMarkerWithLabel label={5} size={80} color="#3b82f6" />
     </div>
   ),
-}
+};
 
 export const PhotoLocations: Story = {
   render: () => (
@@ -121,13 +121,18 @@ export const PhotoLocations: Story = {
       <MapMarkerWithLabel label="3" size={40} color="#3b82f6" />
     </div>
   ),
-}
+};
 
 export const ObservationMarker: Story = {
   render: () => (
     <div className="flex gap-6 items-end">
       <div className="flex flex-col items-center gap-2">
-        <MapMarkerWithLabel label="🎯" size={64} color="#ef4444" labelSize="lg" />
+        <MapMarkerWithLabel
+          label="🎯"
+          size={64}
+          color="#ef4444"
+          labelSize="lg"
+        />
         <span className="text-sm text-gray-400">Observation</span>
       </div>
       <div className="flex flex-col items-center gap-2">
@@ -140,11 +145,11 @@ export const ObservationMarker: Story = {
       </div>
     </div>
   ),
-}
+};
 
 export const NoLabel: Story = {
   args: {
     size: 48,
-    color: '#8b5cf6',
+    color: "#8b5cf6",
   },
-}
+};

@@ -1,5 +1,5 @@
-import { Role } from '@/types/rbac'
-import { z } from 'zod'
+import { z } from "zod";
+import { Role } from "@/types/rbac";
 
 /**
  * Bootstrap role configuration for pre-assigning roles on first login
@@ -28,13 +28,13 @@ const bootstrapRoleConfigSchema = z.object({
   provider: z.string(),
   userId: z.string(),
   roles: z.array(z.nativeEnum(Role)),
-})
+});
 
-export type BootstrapRoleConfig = z.infer<typeof bootstrapRoleConfigSchema>
+export type BootstrapRoleConfig = z.infer<typeof bootstrapRoleConfigSchema>;
 
-const bootstrapRolesArraySchema = z.array(bootstrapRoleConfigSchema)
+const bootstrapRolesArraySchema = z.array(bootstrapRoleConfigSchema);
 
-let cachedConfig: BootstrapRoleConfig[] | null = null
+let cachedConfig: BootstrapRoleConfig[] | null = null;
 
 /**
  * Get bootstrap roles configuration from environment variable
@@ -43,24 +43,24 @@ let cachedConfig: BootstrapRoleConfig[] | null = null
  */
 export function getBootstrapRolesConfig(): BootstrapRoleConfig[] {
   if (cachedConfig !== null) {
-    return cachedConfig
+    return cachedConfig;
   }
 
-  const envValue = process.env.BOOTSTRAP_ROLES
+  const envValue = process.env.BOOTSTRAP_ROLES;
   if (!envValue) {
-    cachedConfig = []
-    return cachedConfig
+    cachedConfig = [];
+    return cachedConfig;
   }
 
   try {
-    const parsed = JSON.parse(envValue)
-    const validated = bootstrapRolesArraySchema.parse(parsed)
-    cachedConfig = validated
-    return cachedConfig
+    const parsed = JSON.parse(envValue);
+    const validated = bootstrapRolesArraySchema.parse(parsed);
+    cachedConfig = validated;
+    return cachedConfig;
   } catch (error) {
-    console.error('Failed to parse BOOTSTRAP_ROLES:', error)
-    cachedConfig = []
-    return cachedConfig
+    console.error("Failed to parse BOOTSTRAP_ROLES:", error);
+    cachedConfig = [];
+    return cachedConfig;
   }
 }
 
@@ -69,10 +69,11 @@ export function getBootstrapRolesConfig(): BootstrapRoleConfig[] {
  */
 export function findBootstrapConfig(
   provider: string,
-  providerUserId: string
+  providerUserId: string,
 ): BootstrapRoleConfig | undefined {
-  const configs = getBootstrapRolesConfig()
+  const configs = getBootstrapRolesConfig();
   return configs.find(
-    (config) => config.provider === provider && config.userId === providerUserId
-  )
+    (config) =>
+      config.provider === provider && config.userId === providerUserId,
+  );
 }

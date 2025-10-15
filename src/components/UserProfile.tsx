@@ -1,69 +1,77 @@
-'use client'
+"use client";
 
-import { useSession, signIn, signOut } from 'next-auth/react'
-import { useState, useEffect, useRef } from 'react'
-import Button from './Button'
-import {LoginIcon} from "@/components/icons/LoginIcon";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { useEffect, useRef, useState } from "react";
+import { LoginIcon } from "@/components/icons/LoginIcon";
+import Button from "./Button";
 
 export default function UserProfile() {
-  const { data: session, status } = useSession()
-  const [showDetails, setShowDetails] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const { data: session, status } = useSession();
+  const [showDetails, setShowDetails] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDetails(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDetails(false);
       }
     }
 
     if (showDetails) {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showDetails])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDetails]);
 
-  if (status === 'loading') {
-    return <Button variant="secondary" disabled>Loading...</Button>
+  if (status === "loading") {
+    return (
+      <Button variant="secondary" disabled>
+        Loading...
+      </Button>
+    );
   }
 
   const handleLogout = async () => {
     // Clear all local storage and session storage
-    localStorage.clear()
-    sessionStorage.clear()
+    localStorage.clear();
+    sessionStorage.clear();
 
     // Sign out from NextAuth - this clears the session from MongoDB and the session cookie
-    await signOut({ callbackUrl: '/' })
-  }
+    await signOut({ callbackUrl: "/" });
+  };
 
   if (!session) {
     return (
       <Button
-        onClick={() => signIn('keycloak', { callbackUrl: window.location.href })}
+        onClick={() =>
+          signIn("keycloak", { callbackUrl: window.location.href })
+        }
         variant="primary"
         className="flex items-center gap-2"
       >
-          <LoginIcon/> Login
+        <LoginIcon /> Login
       </Button>
-    )
+    );
   }
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <Button
-        onClick={() => setShowDetails(!showDetails)}
-        variant="secondary"
-      >
-        {session.user?.name || 'User'}
+      <Button onClick={() => setShowDetails(!showDetails)} variant="secondary">
+        {session.user?.name || "User"}
       </Button>
 
       {showDetails && (
         <div className="absolute right-0 mt-2 w-96 bg-gray-800 rounded-md shadow-xl z-[10000] border border-gray-700">
           <div className="p-4">
-            <h3 className="text-lg font-bold text-gray-100 mb-3">Profile Information</h3>
+            <h3 className="text-lg font-bold text-gray-100 mb-3">
+              Profile Information
+            </h3>
 
             <div className="space-y-2 text-sm">
               {session.user?.name && (
@@ -110,5 +118,5 @@ export default function UserProfile() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,63 +1,69 @@
-'use client'
+"use client";
 
-import dynamic from 'next/dynamic'
-import { Observation } from '@/types/observation'
-import { useEffect, useState, type ReactNode } from 'react'
+import dynamic from "next/dynamic";
+import { type ReactNode, useEffect, useState } from "react";
+import type { Observation } from "@/types/observation";
 
-const ObservationMap = dynamic(() => import('@/components/ObservationMap'), { ssr: false })
+const ObservationMap = dynamic(() => import("@/components/ObservationMap"), {
+  ssr: false,
+});
 
 interface HomePageProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export default function HomePage({ children }: HomePageProps) {
-  const [observations, setObservations] = useState<Observation[]>([])
+  const [observations, setObservations] = useState<Observation[]>([]);
 
   useEffect(() => {
     // Collect all observation data from JSON script tags
-    const scripts = document.querySelectorAll('script[type="application/json"][data-observation-id]')
-    const loadedObservations: Observation[] = []
+    const scripts = document.querySelectorAll(
+      'script[type="application/json"][data-observation-id]',
+    );
+    const loadedObservations: Observation[] = [];
 
     scripts.forEach((script) => {
       try {
-        const data = JSON.parse(script.textContent || '')
-        loadedObservations.push(data)
+        const data = JSON.parse(script.textContent || "");
+        loadedObservations.push(data);
       } catch (error) {
-        console.error('Error parsing observation data:', error)
+        console.error("Error parsing observation data:", error);
       }
-    })
+    });
 
-    setObservations(loadedObservations)
+    setObservations(loadedObservations);
 
     // Use MutationObserver to detect when new observations are streamed in
     const observer = new MutationObserver(() => {
-      const updatedScripts = document.querySelectorAll('script[type="application/json"][data-observation-id]')
-      const updatedObservations: Observation[] = []
+      const updatedScripts = document.querySelectorAll(
+        'script[type="application/json"][data-observation-id]',
+      );
+      const updatedObservations: Observation[] = [];
 
       updatedScripts.forEach((script) => {
         try {
-          const data = JSON.parse(script.textContent || '')
-          updatedObservations.push(data)
+          const data = JSON.parse(script.textContent || "");
+          updatedObservations.push(data);
         } catch (error) {
-          console.error('Error parsing observation data:', error)
+          console.error("Error parsing observation data:", error);
         }
-      })
+      });
 
-      setObservations(updatedObservations)
-    })
+      setObservations(updatedObservations);
+    });
 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-    })
+    });
 
-    return () => observer.disconnect()
-  }, [])
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="w-full" style={{ height: 'calc(100vh - 4rem)' }}>
+    <div className="w-full" style={{ height: "calc(100vh - 4rem)" }}>
       {children}
       <ObservationMap observations={observations} />
     </div>
-  )
+  );
 }

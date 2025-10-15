@@ -1,15 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/nextjs';
-import { SessionProvider } from 'next-auth/react';
-import UserProfile from './UserProfile';
-import { Role } from '@/types/rbac';
+import type { Meta, StoryObj } from "@storybook/nextjs";
+import { SessionProvider } from "next-auth/react";
+import { Role } from "@/types/rbac";
+import UserProfile from "./UserProfile";
 
 const meta = {
-  title: 'Components/UserProfile',
+  title: "Components/UserProfile",
   component: UserProfile,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   decorators: [
     (Story) => (
       <div className="bg-gray-800 p-4 rounded-md">
@@ -42,14 +42,15 @@ export const LoggedIn: Story = {
       <SessionProvider
         session={{
           user: {
-            id: '12345',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            image: 'https://i.pravatar.cc/150?img=12',
+            id: "12345",
+            name: "John Doe",
+            email: "john.doe@example.com",
+            image: "https://i.pravatar.cc/150?img=12",
             roles: [Role.VALIDATED_USER],
           },
-          accessToken: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-          expires: '9999-12-31T23:59:59.999Z',
+          accessToken:
+            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+          expires: "9999-12-31T23:59:59.999Z",
         }}
       >
         <div className="bg-gray-800 p-4 rounded-md">

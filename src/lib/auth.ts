@@ -1,12 +1,12 @@
-import { NextAuthOptions } from "next-auth"
-import KeycloakProvider from "next-auth/providers/keycloak"
-import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import { config } from "@/config/env"
-import clientPromise from "@/lib/mongodb"
-import { getUserRoles, assignRole } from "@/lib/user-roles"
-import { getAllRoles } from "@/lib/rbac"
-import { Role } from "@/types/rbac"
-import { findBootstrapConfig } from "@/lib/bootstrap-roles"
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import type { NextAuthOptions } from "next-auth";
+import KeycloakProvider from "next-auth/providers/keycloak";
+import { config } from "@/config/env";
+import { findBootstrapConfig } from "@/lib/bootstrap-roles";
+import clientPromise from "@/lib/mongodb";
+import { getAllRoles } from "@/lib/rbac";
+import { assignRole, getUserRoles } from "@/lib/user-roles";
+import { Role } from "@/types/rbac";
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
           name: profile.name,
           email: profile.email,
           image: profile.picture,
-        }
+        };
       },
     }),
   ],
@@ -33,44 +33,54 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (!account) return true
+      if (!account) return true;
 
       // Check if user matches bootstrap roles configuration
       const bootstrapConfig = findBootstrapConfig(
         account.provider,
-        account.providerAccountId
-      )
+        account.providerAccountId,
+      );
 
       if (bootstrapConfig && user.id) {
-          console.log('Bootstrap roles found for user', user.id, ". Bootstrap config: ", JSON.stringify(bootstrapConfig))
+        console.log(
+          "Bootstrap roles found for user",
+          user.id,
+          ". Bootstrap config: ",
+          JSON.stringify(bootstrapConfig),
+        );
         // Get existing roles for this user
-        const existingRoles = await getUserRoles(user.id)
+        const existingRoles = await getUserRoles(user.id);
 
         // Assign any bootstrap roles that user doesn't already have
         for (const role of bootstrapConfig.roles) {
           if (!existingRoles.includes(role)) {
-            await assignRole(user.id, role)
+            await assignRole(user.id, role);
           }
         }
       }
 
-      return true
+      return true;
     },
     async session({ session, user }) {
       if (session.user) {
         // Use NextAuth's internal user ID as the canonical identifier
         // This works across all auth providers (Keycloak, Google, etc.)
-        session.user.id = user.id
+        session.user.id = user.id;
 
         // Get roles from our separate user_roles table keyed by NextAuth ID
-        const userRoles = await getUserRoles(user.id)
-        session.user.roles = getAllRoles(userRoles, true, user.id, user.email || undefined)
+        const userRoles = await getUserRoles(user.id);
+        session.user.roles = getAllRoles(
+          userRoles,
+          true,
+          user.id,
+          user.email || undefined,
+        );
       }
 
-      return session
+      return session;
     },
   },
   pages: {
-    signIn: '/auth/signin',
+    signIn: "/auth/signin",
   },
-}
+};

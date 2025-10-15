@@ -1,93 +1,101 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import Button from '@/components/Button'
-import Link from 'next/link'
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import Button from "@/components/Button";
 
 interface Observation {
-  id: string
-  revisionId: number
-  description?: string
+  id: string;
+  revisionId: number;
+  description?: string;
   location?: {
-    latitude: number
-    longitude: number
-  }
-  imageIds?: any[]
-  createdAt: string
-  revisionCreatedAt: string
-  published: boolean
-  submitted: boolean
-  owner: string
-  canPublish?: boolean
+    latitude: number;
+    longitude: number;
+  };
+  imageIds?: any[];
+  createdAt: string;
+  revisionCreatedAt: string;
+  published: boolean;
+  submitted: boolean;
+  owner: string;
+  canPublish?: boolean;
 }
 
 export default function ReviewObservationPage() {
-  const params = useParams()
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const id = params.id as string
-  const revisionId = searchParams.get('revision')
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const id = params.id as string;
+  const revisionId = searchParams.get("revision");
 
-  const [observation, setObservation] = useState<Observation | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [publishing, setPublishing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [observation, setObservation] = useState<Observation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchObservation()
-  }, [id])
+    fetchObservation();
+  }, [id]);
 
   async function fetchObservation() {
     try {
-      const response = await fetch(`/api/observations/${id}${revisionId ? `?revisionId=${revisionId}` : ''}`)
+      const response = await fetch(
+        `/api/observations/${id}${revisionId ? `?revisionId=${revisionId}` : ""}`,
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch observation')
+        throw new Error("Failed to fetch observation");
       }
 
-      const data = await response.json()
-      setObservation(data)
+      const data = await response.json();
+      setObservation(data);
     } catch (err) {
-      setError('Failed to load observation')
-      console.error(err)
+      setError("Failed to load observation");
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function handlePublish() {
-    if (!observation) return
+    if (!observation) return;
 
-    if (!confirm('Are you sure you want to publish this observation? This will make it visible to all users.')) {
-      return
+    if (
+      !confirm(
+        "Are you sure you want to publish this observation? This will make it visible to all users.",
+      )
+    ) {
+      return;
     }
 
-    setPublishing(true)
+    setPublishing(true);
 
     try {
       const response = await fetch(`/api/observations/${id}/publish`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           revisionId: observation.revisionId,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to publish observation')
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to publish observation");
       }
 
-      alert('Observation published successfully!')
-      router.push('/review')
+      alert("Observation published successfully!");
+      router.push("/review");
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to publish observation')
-      console.error(err)
+      alert(
+        err instanceof Error ? err.message : "Failed to publish observation",
+      );
+      console.error(err);
     } finally {
-      setPublishing(false)
+      setPublishing(false);
     }
   }
 
@@ -99,7 +107,7 @@ export default function ReviewObservationPage() {
           <p className="text-gray-400">Loading observation...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (error || !observation) {
@@ -107,13 +115,15 @@ export default function ReviewObservationPage() {
       <div className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center">
         <div className="max-w-md mx-auto p-8 bg-gray-800 rounded-lg border border-gray-700">
           <h1 className="text-2xl font-bold text-red-400 mb-4">Error</h1>
-          <p className="text-gray-300 mb-6">{error || 'Observation not found'}</p>
+          <p className="text-gray-300 mb-6">
+            {error || "Observation not found"}
+          </p>
           <Link href="/review">
             <Button variant="primary">Back to Review List</Button>
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -122,9 +132,7 @@ export default function ReviewObservationPage() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-6 flex items-center justify-between">
             <Link href="/review">
-              <Button variant="secondary">
-                ← Back to Review List
-              </Button>
+              <Button variant="secondary">← Back to Review List</Button>
             </Link>
           </div>
 
@@ -149,25 +157,29 @@ export default function ReviewObservationPage() {
                 </span>
               </div>
 
-              <h1 className="text-3xl font-bold text-gray-100 mb-2">Review Observation</h1>
-              <p className="text-gray-400">
-                Observation ID: {observation.id}
-              </p>
+              <h1 className="text-3xl font-bold text-gray-100 mb-2">
+                Review Observation
+              </h1>
+              <p className="text-gray-400">Observation ID: {observation.id}</p>
             </div>
 
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-semibold text-gray-200 mb-2">Description</h2>
+                <h2 className="text-lg font-semibold text-gray-200 mb-2">
+                  Description
+                </h2>
                 <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                   <p className="text-gray-300">
-                    {observation.description || 'No description provided'}
+                    {observation.description || "No description provided"}
                   </p>
                 </div>
               </div>
 
               {observation.location && (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-200 mb-2">Location</h2>
+                  <h2 className="text-lg font-semibold text-gray-200 mb-2">
+                    Location
+                  </h2>
                   <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                     <p className="text-gray-300">
                       Latitude: {observation.location.latitude.toFixed(6)}
@@ -180,7 +192,9 @@ export default function ReviewObservationPage() {
               )}
 
               <div>
-                <h2 className="text-lg font-semibold text-gray-200 mb-2">Photos</h2>
+                <h2 className="text-lg font-semibold text-gray-200 mb-2">
+                  Photos
+                </h2>
                 <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
                   <p className="text-gray-300">
                     {observation.imageIds?.length || 0} photo(s) attached
@@ -194,17 +208,20 @@ export default function ReviewObservationPage() {
               </div>
 
               <div>
-                <h2 className="text-lg font-semibold text-gray-200 mb-2">Metadata</h2>
+                <h2 className="text-lg font-semibold text-gray-200 mb-2">
+                  Metadata
+                </h2>
                 <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 space-y-2">
                   <p className="text-gray-300">
-                    <span className="text-gray-500">Owner:</span> {observation.owner}
+                    <span className="text-gray-500">Owner:</span>{" "}
+                    {observation.owner}
                   </p>
                   <p className="text-gray-300">
-                    <span className="text-gray-500">Created:</span>{' '}
+                    <span className="text-gray-500">Created:</span>{" "}
                     {new Date(observation.createdAt).toLocaleString()}
                   </p>
                   <p className="text-gray-300">
-                    <span className="text-gray-500">This Revision:</span>{' '}
+                    <span className="text-gray-500">This Revision:</span>{" "}
                     {new Date(observation.revisionCreatedAt).toLocaleString()}
                   </p>
                 </div>
@@ -219,7 +236,7 @@ export default function ReviewObservationPage() {
                   disabled={publishing}
                   className="flex-1"
                 >
-                  {publishing ? 'Publishing...' : 'Publish Observation'}
+                  {publishing ? "Publishing..." : "Publish Observation"}
                 </Button>
               )}
               {observation.published && (
@@ -234,5 +251,5 @@ export default function ReviewObservationPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

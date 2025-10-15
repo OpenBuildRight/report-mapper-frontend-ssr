@@ -1,49 +1,46 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import Link from 'next/link'
-import { useSession } from 'next-auth/react'
-import { hasPermission } from '@/lib/rbac'
-import { Permission } from '@/types/rbac'
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { hasPermission } from "@/lib/rbac";
+import { Permission } from "@/types/rbac";
 
 interface SlideOutMenuProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export default function SlideOutMenu({ isOpen, onClose }: SlideOutMenuProps) {
-  const { data: session } = useSession()
+  const { data: session } = useSession();
 
-  const userRoles = (session?.user as any)?.roles || []
-  const canReview = hasPermission(userRoles, Permission.READ_ALL_OBSERVATIONS)
+  const userRoles = (session?.user as any)?.roles || [];
+  const canReview = hasPermission(userRoles, Permission.READ_ALL_OBSERVATIONS);
 
   useEffect(() => {
     // Prevent body scroll when menu is open
     if (isOpen) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen])
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-[9998]"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={onClose} />
 
       {/* Slide-out Menu */}
       <div
         className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-gray-800 border-r border-gray-700 shadow-xl z-[9999] overflow-y-auto transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <ul className="py-4">
@@ -92,5 +89,5 @@ export default function SlideOutMenu({ isOpen, onClose }: SlideOutMenuProps) {
         </ul>
       </div>
     </>
-  )
+  );
 }

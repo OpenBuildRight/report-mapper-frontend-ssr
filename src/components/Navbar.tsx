@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import UserProfile from './UserProfile'
-import MenuIcon from './icons/MenuIcon'
-import SlideOutMenu from './SlideOutMenu'
+import Link from "next/link";
+import { useState } from "react";
+import MenuIcon from "./icons/MenuIcon";
+import SlideOutMenu from "./SlideOutMenu";
+import UserProfile from "./UserProfile";
 
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <>
@@ -57,5 +57,5 @@ export default function Navbar() {
 
       <SlideOutMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </>
-  )
+  );
 }

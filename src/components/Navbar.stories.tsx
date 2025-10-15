@@ -1,15 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/nextjs';
-import { SessionProvider } from 'next-auth/react';
-import Navbar from './Navbar';
-import { Role } from '@/types/rbac';
+import type { Meta, StoryObj } from "@storybook/nextjs";
+import { SessionProvider } from "next-auth/react";
+import { Role } from "@/types/rbac";
+import Navbar from "./Navbar";
 
 const meta = {
-  title: 'Components/Navbar',
+  title: "Components/Navbar",
   component: Navbar,
   parameters: {
-    layout: 'fullscreen',
+    layout: "fullscreen",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 } satisfies Meta<typeof Navbar>;
 
 export default meta;
@@ -35,12 +35,12 @@ export const RegularUser: Story = {
       <SessionProvider
         session={{
           user: {
-            id: '12345',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
+            id: "12345",
+            name: "John Doe",
+            email: "john.doe@example.com",
             roles: [Role.VALIDATED_USER],
           },
-          expires: '9999-12-31T23:59:59.999Z',
+          expires: "9999-12-31T23:59:59.999Z",
         }}
       >
         <div className="bg-gray-900 min-h-screen">
@@ -58,12 +58,12 @@ export const Moderator: Story = {
       <SessionProvider
         session={{
           user: {
-            id: '12345',
-            name: 'Jane Moderator',
-            email: 'jane.mod@example.com',
+            id: "12345",
+            name: "Jane Moderator",
+            email: "jane.mod@example.com",
             roles: [Role.VALIDATED_USER, Role.MODERATOR],
           },
-          expires: '9999-12-31T23:59:59.999Z',
+          expires: "9999-12-31T23:59:59.999Z",
         }}
       >
         <div className="bg-gray-900 min-h-screen">
@@ -81,12 +81,12 @@ export const Admin: Story = {
       <SessionProvider
         session={{
           user: {
-            id: '12345',
-            name: 'Admin User',
-            email: 'admin@example.com',
+            id: "12345",
+            name: "Admin User",
+            email: "admin@example.com",
             roles: [Role.VALIDATED_USER, Role.MODERATOR, Role.SECURITY_ADMIN],
           },
-          expires: '9999-12-31T23:59:59.999Z',
+          expires: "9999-12-31T23:59:59.999Z",
         }}
       >
         <div className="bg-gray-900 min-h-screen">

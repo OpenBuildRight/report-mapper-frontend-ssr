@@ -10,138 +10,149 @@
  * 4. Generating .env.local file with all necessary environment variables
  */
 
-import {spawn, execSync} from 'child_process'
-import {writeFileSync, existsSync} from 'fs'
-import {resolve} from 'path'
-import {randomBytes} from 'crypto'
+import { execSync, spawn } from "child_process";
+import { randomBytes } from "crypto";
+import { existsSync, writeFileSync } from "fs";
+import { resolve } from "path";
 
-const SETUP_DIR = resolve(__dirname, '../local-env-setup')
-const ENV_FILE = resolve(__dirname, '../.env.local')
-const KEYCLOAK_URL = 'http://localhost:9003'
-const MAX_ATTEMPTS = 30
+const SETUP_DIR = resolve(__dirname, "../local-env-setup");
+const ENV_FILE = resolve(__dirname, "../.env.local");
+const KEYCLOAK_URL = "http://localhost:9003";
+const MAX_ATTEMPTS = 30;
 
 // ANSI color codes
 const colors = {
-    reset: '\x1b[0m',
-    bright: '\x1b[1m',
-    red: '\x1b[31m',
-    green: '\x1b[32m',
-    yellow: '\x1b[33m',
-    blue: '\x1b[34m',
-    magenta: '\x1b[35m',
-    cyan: '\x1b[36m',
-}
+  reset: "\x1b[0m",
+  bright: "\x1b[1m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
+};
 
 function error(message: string): never {
-    console.error(`${colors.red}❌ ${message}${colors.reset}`)
-    process.exit(1)
+  console.error(`${colors.red}❌ ${message}${colors.reset}`);
+  process.exit(1);
 }
 
 function exec(command: string, cwd?: string): string {
-    try {
-        return execSync(command, {
-            cwd: cwd || process.cwd(),
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'pipe'],
-        }).trim()
-    } catch (err: any) {
-        error(`Command failed: ${command}\n${err.message}`)
-    }
+  try {
+    return execSync(command, {
+      cwd: cwd || process.cwd(),
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+  } catch (err: any) {
+    error(`Command failed: ${command}\n${err.message}`);
+  }
 }
 
 function execVerbose(command: string, cwd?: string): void {
-    try {
-        execSync(command, {
-            cwd: cwd || process.cwd(),
-            encoding: 'utf-8',
-            stdio: 'inherit',
-        })
-    } catch (err: any) {
-        error(`Command failed: ${command}\n${err.message}`)
-    }
+  try {
+    execSync(command, {
+      cwd: cwd || process.cwd(),
+      encoding: "utf-8",
+      stdio: "inherit",
+    });
+  } catch (err: any) {
+    error(`Command failed: ${command}\n${err.message}`);
+  }
 }
 
 async function checkKeycloakHealth(): Promise<boolean> {
-    try {
-        // Just check if Keycloak responds at all (will get 302 redirect)
-        const response = await fetch(`${KEYCLOAK_URL}/`)
-        return response.status === 302 || response.ok
-    } catch {
-        return false
-    }
+  try {
+    // Just check if Keycloak responds at all (will get 302 redirect)
+    const response = await fetch(`${KEYCLOAK_URL}/`);
+    return response.status === 302 || response.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function waitForKeycloak(): Promise<void> {
-    console.log('Waiting for Keycloak to be ready...')
+  console.log("Waiting for Keycloak to be ready...");
 
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        const isReady = await checkKeycloakHealth()
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const isReady = await checkKeycloakHealth();
 
-        if (isReady) {
-            console.log('Keycloak is ready!')
-            return
-        }
-
-        console.log(`   Attempt ${attempt}/${MAX_ATTEMPTS}...`)
-        await new Promise(resolve => setTimeout(resolve, 2000))
+    if (isReady) {
+      console.log("Keycloak is ready!");
+      return;
     }
 
-    error(`Keycloak failed to start after ${MAX_ATTEMPTS} attempts`)
+    console.log(`   Attempt ${attempt}/${MAX_ATTEMPTS}...`);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  error(`Keycloak failed to start after ${MAX_ATTEMPTS} attempts`);
 }
 
 function generateNextAuthSecret(): string {
-    return randomBytes(32).toString('base64')
+  return randomBytes(32).toString("base64");
 }
 
 async function main() {
-    console.log(`${colors.cyan}${colors.bright}🚀 Setting up local development environment...${colors.reset}\n`)
+  console.log(
+    `${colors.cyan}${colors.bright}🚀 Setting up local development environment...${colors.reset}\n`,
+  );
 
-    // Check if we're in the right directory
-    if (!existsSync(resolve(SETUP_DIR, 'compose.yaml'))) {
-        error('compose.yaml not found in local-env-setup directory')
-    }
+  // Check if we're in the right directory
+  if (!existsSync(resolve(SETUP_DIR, "compose.yaml"))) {
+    error("compose.yaml not found in local-env-setup directory");
+  }
 
-    console.log("Terraform version.")
-    execVerbose('terraform version', SETUP_DIR)
+  console.log("Terraform version.");
+  execVerbose("terraform version", SETUP_DIR);
 
-    console.log("Docker version.")
-    execVerbose('docker version', SETUP_DIR)
+  console.log("Docker version.");
+  execVerbose("docker version", SETUP_DIR);
 
-    console.log("Docker compose version.")
-    execVerbose('docker compose version', SETUP_DIR)
+  console.log("Docker compose version.");
+  execVerbose("docker compose version", SETUP_DIR);
 
-    // Stop and remove existing containers for clean state
-    console.log('Cleaning up existing containers...')
-    execVerbose('docker compose down -v', SETUP_DIR)
+  // Stop and remove existing containers for clean state
+  console.log("Cleaning up existing containers...");
+  execVerbose("docker compose down -v", SETUP_DIR);
 
-    // Start Docker containers
-    console.log('Starting Docker containers...')
-    execVerbose('docker compose up -d', SETUP_DIR)
+  // Start Docker containers
+  console.log("Starting Docker containers...");
+  execVerbose("docker compose up -d", SETUP_DIR);
 
-    // Wait for Keycloak
-    await waitForKeycloak()
+  // Wait for Keycloak
+  await waitForKeycloak();
 
-    // Apply Terraform configuration
-    console.log('Applying Terraform configuration...')
-    execVerbose('terraform init -upgrade', SETUP_DIR)
-    execVerbose('terraform apply -auto-approve', SETUP_DIR)
+  // Apply Terraform configuration
+  console.log("Applying Terraform configuration...");
+  execVerbose("terraform init -upgrade", SETUP_DIR);
+  execVerbose("terraform apply -auto-approve", SETUP_DIR);
 
-    // Get Terraform outputs
-    console.log('Extracting configuration values...')
-    const keycloakClientSecret = exec('terraform output -raw keycloak_client_secret', SETUP_DIR)
-    const keycloakIssuer = exec('terraform output -raw keycloak_issuer', SETUP_DIR)
-    const keycloakClientId = exec('terraform output -raw keycloak_client_id', SETUP_DIR)
-    const adminUserId = exec('terraform output -raw admin_user_id', SETUP_DIR)
-    const devUserId = exec('terraform output -raw dev_user_id', SETUP_DIR)
+  // Get Terraform outputs
+  console.log("Extracting configuration values...");
+  const keycloakClientSecret = exec(
+    "terraform output -raw keycloak_client_secret",
+    SETUP_DIR,
+  );
+  const keycloakIssuer = exec(
+    "terraform output -raw keycloak_issuer",
+    SETUP_DIR,
+  );
+  const keycloakClientId = exec(
+    "terraform output -raw keycloak_client_id",
+    SETUP_DIR,
+  );
+  const adminUserId = exec("terraform output -raw admin_user_id", SETUP_DIR);
+  const devUserId = exec("terraform output -raw dev_user_id", SETUP_DIR);
 
-    // Generate NextAuth secret
-    console.log('Generating NextAuth secret...')
-    const nextAuthSecret = generateNextAuthSecret()
+  // Generate NextAuth secret
+  console.log("Generating NextAuth secret...");
+  const nextAuthSecret = generateNextAuthSecret();
 
-    // Generate .env.local file
-    console.log(`Generating ${ENV_FILE}...`)
+  // Generate .env.local file
+  console.log(`Generating ${ENV_FILE}...`);
 
-    const envContent = `# NextAuth Configuration
+  const envContent = `# NextAuth Configuration
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=${nextAuthSecret}
 
@@ -171,13 +182,12 @@ MINIO_USE_SSL=false
 # Bootstrap Roles Configuration
 # Pre-assign roles to users on first login based on provider and user ID
 BOOTSTRAP_ROLES='[{"provider":"keycloak","userId":"${adminUserId}","roles":["security-admin","moderator","validated-user"]},{"provider":"keycloak","userId":"${devUserId}","roles":["security-admin","moderator","validated-user"]}]'
-`
+`;
 
-    writeFileSync(ENV_FILE, envContent, 'utf-8')
-    console.log("Local Env Setup.")
-
+  writeFileSync(ENV_FILE, envContent, "utf-8");
+  console.log("Local Env Setup.");
 }
 
 main().catch((err) => {
-    error(err.message)
-})
+  error(err.message);
+});

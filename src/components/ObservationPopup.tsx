@@ -1,19 +1,24 @@
-'use client'
+"use client";
 
-import { Observation } from '@/types/observation'
-import { getPhotoLabel } from '@/lib/photoLabels'
-import Link from 'next/link'
-import dynamic from 'next/dynamic'
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { getPhotoLabel } from "@/lib/photoLabels";
+import type { Observation } from "@/types/observation";
 
-const MapComponent = dynamic(() => import('./observation-form/MapComponent'), { ssr: false })
+const MapComponent = dynamic(() => import("./observation-form/MapComponent"), {
+  ssr: false,
+});
 
 interface ObservationPopupProps {
-  observation: Observation
-  onClose: () => void
+  observation: Observation;
+  onClose: () => void;
 }
 
-export default function ObservationPopup({ observation, onClose }: ObservationPopupProps) {
-  const photosWithLocation = observation.photos.filter(p => p.location)
+export default function ObservationPopup({
+  observation,
+  onClose,
+}: ObservationPopupProps) {
+  const photosWithLocation = observation.photos.filter((p) => p.location);
 
   return (
     <div
@@ -27,17 +32,30 @@ export default function ObservationPopup({ observation, onClose }: ObservationPo
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div>
-            <h2 className="text-2xl font-bold text-gray-100">Observation Details</h2>
+            <h2 className="text-2xl font-bold text-gray-100">
+              Observation Details
+            </h2>
             <p className="text-sm text-gray-400 mt-1">
-              By {observation.createdBy.name} • {new Date(observation.createdAt).toLocaleDateString()}
+              By {observation.createdBy.name} •{" "}
+              {new Date(observation.createdAt).toLocaleDateString()}
             </p>
           </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-200 transition"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -46,15 +64,20 @@ export default function ObservationPopup({ observation, onClose }: ObservationPo
         <div className="flex-1 overflow-y-auto p-6">
           {/* Observation Description */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-200 mb-2">Description</h3>
+            <h3 className="text-lg font-semibold text-gray-200 mb-2">
+              Description
+            </h3>
             <p className="text-gray-300">{observation.description}</p>
           </div>
 
           {/* Location */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-200 mb-2">Location</h3>
+            <h3 className="text-lg font-semibold text-gray-200 mb-2">
+              Location
+            </h3>
             <p className="text-gray-400 text-sm">
-              {observation.location.latitude.toFixed(6)}, {observation.location.longitude.toFixed(6)}
+              {observation.location.latitude.toFixed(6)},{" "}
+              {observation.location.longitude.toFixed(6)}
             </p>
           </div>
 
@@ -64,12 +87,12 @@ export default function ObservationPopup({ observation, onClose }: ObservationPo
               <h3 className="text-lg font-semibold text-gray-200 mb-3">Map</h3>
               <MapComponent
                 center={observation.location}
-                photos={observation.photos.map(p => ({
+                photos={observation.photos.map((p) => ({
                   id: p.id,
                   preview: p.url,
                   description: p.description,
                   location: p.location,
-                  file: new File([], ''), // Dummy file for type compatibility
+                  file: new File([], ""), // Dummy file for type compatibility
                 }))}
                 observationLocation={observation.location}
               />
@@ -83,7 +106,10 @@ export default function ObservationPopup({ observation, onClose }: ObservationPo
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {observation.photos.map((photo, index) => (
-                <div key={photo.id} className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
+                <div
+                  key={photo.id}
+                  className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700"
+                >
                   <div className="relative">
                     <img
                       src={photo.url}
@@ -96,11 +122,12 @@ export default function ObservationPopup({ observation, onClose }: ObservationPo
                   </div>
                   <div className="p-3">
                     <p className="text-sm text-gray-300">
-                      {photo.description || 'No description'}
+                      {photo.description || "No description"}
                     </p>
                     {photo.location && (
                       <p className="text-xs text-gray-500 mt-1">
-                        📍 {photo.location.latitude.toFixed(6)}, {photo.location.longitude.toFixed(6)}
+                        📍 {photo.location.latitude.toFixed(6)},{" "}
+                        {photo.location.longitude.toFixed(6)}
                       </p>
                     )}
                   </div>
@@ -129,5 +156,5 @@ export default function ObservationPopup({ observation, onClose }: ObservationPo
         </div>
       </div>
     </div>
-  )
+  );
 }

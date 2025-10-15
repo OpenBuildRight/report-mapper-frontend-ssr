@@ -1,89 +1,95 @@
-'use client'
+"use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
-import MarkerClusterGroup from './map/MarkerClusterGroup'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { Observation } from '@/types/observation'
-import ClusterMarker from './icons/ClusterMarker'
-import { useEffect } from 'react'
+import L from "leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import MarkerClusterGroup from "./map/MarkerClusterGroup";
+import "leaflet/dist/leaflet.css";
+import { useEffect } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import type { Observation } from "@/types/observation";
+import ClusterMarker from "./icons/ClusterMarker";
 
 // Fix for default marker icons in Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-})
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
 
 // Observation marker icon (green)
 const observationIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-})
+  shadowSize: [41, 41],
+});
 
 interface ObservationMapProps {
-  observations: Observation[]
-  center?: { latitude: number; longitude: number }
-  zoom?: number
+  observations: Observation[];
+  center?: { latitude: number; longitude: number };
+  zoom?: number;
 }
 
 function FitBounds({ observations }: { observations: Observation[] }) {
-  const map = useMap()
+  const map = useMap();
 
   useEffect(() => {
     if (observations.length > 0) {
       const bounds = L.latLngBounds(
-        observations.map(obs => [obs.location.latitude, obs.location.longitude])
-      )
+        observations.map((obs) => [
+          obs.location.latitude,
+          obs.location.longitude,
+        ]),
+      );
       map.fitBounds(bounds, {
         padding: [50, 50],
-        maxZoom: 15
-      })
+        maxZoom: 15,
+      });
     }
-  }, [map, observations])
+  }, [map, observations]);
 
-  return null
+  return null;
 }
 
 export default function ObservationMap({
   observations,
   center = { latitude: 0, longitude: 0 },
-  zoom = 2
+  zoom = 2,
 }: ObservationMapProps) {
-
   // Create custom cluster icon
   const createClusterCustomIcon = (cluster: any) => {
-    const count = cluster.getChildCount()
+    const count = cluster.getChildCount();
 
     const getClusterColor = (count: number) => {
-      if (count < 10) return '#10b981' // green
-      if (count < 50) return '#3b82f6' // blue
-      if (count < 100) return '#8b5cf6' // purple
-      return '#ef4444' // red
-    }
+      if (count < 10) return "#10b981"; // green
+      if (count < 50) return "#3b82f6"; // blue
+      if (count < 100) return "#8b5cf6"; // purple
+      return "#ef4444"; // red
+    };
 
-    const color = getClusterColor(count)
+    const color = getClusterColor(count);
 
     const iconHtml = renderToStaticMarkup(
-      <ClusterMarker count={count} color={color} />
-    )
+      <ClusterMarker count={count} color={color} />,
+    );
 
     return L.divIcon({
       html: iconHtml,
-      className: 'custom-cluster-icon',
+      className: "custom-cluster-icon",
       iconSize: L.point(40, 40, true),
-    })
-  }
+    });
+  };
 
-  const defaultCenter = observations.length > 0
-    ? observations[0].location
-    : center
+  const defaultCenter =
+    observations.length > 0 ? observations[0].location : center;
 
   return (
     <div className="relative h-screen w-full">
@@ -109,7 +115,10 @@ export default function ObservationMap({
             {observations.map((observation) => (
               <Marker
                 key={observation.id}
-                position={[observation.location.latitude, observation.location.longitude]}
+                position={[
+                  observation.location.latitude,
+                  observation.location.longitude,
+                ]}
                 icon={observationIcon}
               >
                 <Popup maxWidth={400}>
@@ -118,10 +127,12 @@ export default function ObservationMap({
                       {observation.description}
                     </p>
                     <p className="text-xs text-gray-600 mb-2">
-                      By {observation.createdBy.name} • {new Date(observation.createdAt).toLocaleDateString()}
+                      By {observation.createdBy.name} •{" "}
+                      {new Date(observation.createdAt).toLocaleDateString()}
                     </p>
                     <p className="text-xs text-gray-500 mb-3">
-                      📍 {observation.location.latitude.toFixed(6)}, {observation.location.longitude.toFixed(6)}
+                      📍 {observation.location.latitude.toFixed(6)},{" "}
+                      {observation.location.longitude.toFixed(6)}
                     </p>
 
                     {/* Photo thumbnails */}
@@ -135,7 +146,7 @@ export default function ObservationMap({
                             <img
                               key={photo.id}
                               src={photo.url}
-                              alt={photo.description || 'Photo'}
+                              alt={photo.description || "Photo"}
                               className="w-full h-20 object-cover rounded"
                             />
                           ))}
@@ -150,7 +161,9 @@ export default function ObservationMap({
 
                     {observation.canEdit && (
                       <button
-                        onClick={() => window.location.href = `/observations/${observation.id}/edit`}
+                        onClick={() =>
+                          (window.location.href = `/observations/${observation.id}/edit`)
+                        }
                         className="mt-2 text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition w-full"
                       >
                         Edit Observation
@@ -164,5 +177,5 @@ export default function ObservationMap({
         </MapContainer>
       </div>
     </div>
-  )
+  );
 }

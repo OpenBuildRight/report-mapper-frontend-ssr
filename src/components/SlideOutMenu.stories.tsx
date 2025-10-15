@@ -1,15 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/nextjs';
-import { SessionProvider } from 'next-auth/react';
-import SlideOutMenu from './SlideOutMenu';
-import { Role } from '@/types/rbac';
+import type { Meta, StoryObj } from "@storybook/nextjs";
+import { SessionProvider } from "next-auth/react";
+import { Role } from "@/types/rbac";
+import SlideOutMenu from "./SlideOutMenu";
 
 const meta = {
-  title: 'Components/SlideOutMenu',
+  title: "Components/SlideOutMenu",
   component: SlideOutMenu,
   parameters: {
-    layout: 'fullscreen',
+    layout: "fullscreen",
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 } satisfies Meta<typeof SlideOutMenu>;
 
 export default meta;
@@ -36,7 +36,7 @@ export const Closed: Story = {
 export const OpenNotLoggedIn: Story = {
   args: {
     isOpen: true,
-    onClose: () => console.log('Close menu'),
+    onClose: () => console.log("Close menu"),
   },
   decorators: [
     (Story) => (
@@ -53,19 +53,19 @@ export const OpenNotLoggedIn: Story = {
 export const OpenRegularUser: Story = {
   args: {
     isOpen: true,
-    onClose: () => console.log('Close menu'),
+    onClose: () => console.log("Close menu"),
   },
   decorators: [
     (Story) => (
       <SessionProvider
         session={{
           user: {
-            id: '12345',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
+            id: "12345",
+            name: "John Doe",
+            email: "john.doe@example.com",
             roles: [Role.VALIDATED_USER],
           },
-          expires: '9999-12-31T23:59:59.999Z',
+          expires: "9999-12-31T23:59:59.999Z",
         }}
       >
         <div className="bg-gray-900 min-h-screen">
@@ -80,19 +80,19 @@ export const OpenRegularUser: Story = {
 export const OpenModerator: Story = {
   args: {
     isOpen: true,
-    onClose: () => console.log('Close menu'),
+    onClose: () => console.log("Close menu"),
   },
   decorators: [
     (Story) => (
       <SessionProvider
         session={{
           user: {
-            id: '12345',
-            name: 'Jane Moderator',
-            email: 'jane.mod@example.com',
+            id: "12345",
+            name: "Jane Moderator",
+            email: "jane.mod@example.com",
             roles: [Role.VALIDATED_USER, Role.MODERATOR],
           },
-          expires: '9999-12-31T23:59:59.999Z',
+          expires: "9999-12-31T23:59:59.999Z",
         }}
       >
         <div className="bg-gray-900 min-h-screen">
@@ -107,19 +107,19 @@ export const OpenModerator: Story = {
 export const OpenAdmin: Story = {
   args: {
     isOpen: true,
-    onClose: () => console.log('Close menu'),
+    onClose: () => console.log("Close menu"),
   },
   decorators: [
     (Story) => (
       <SessionProvider
         session={{
           user: {
-            id: '12345',
-            name: 'Admin User',
-            email: 'admin@example.com',
+            id: "12345",
+            name: "Admin User",
+            email: "admin@example.com",
             roles: [Role.VALIDATED_USER, Role.MODERATOR, Role.SECURITY_ADMIN],
           },
-          expires: '9999-12-31T23:59:59.999Z',
+          expires: "9999-12-31T23:59:59.999Z",
         }}
       >
         <div className="bg-gray-900 min-h-screen">

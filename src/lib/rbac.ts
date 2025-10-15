@@ -1,18 +1,18 @@
-import { Role } from '@/types/rbac'
-import { OwnedEntity } from '@/types/revision'
+import type { Role } from "@/types/rbac";
+import type { OwnedEntity } from "@/types/revision";
 
 // Re-export all generic RBAC functions
 export {
+  canDeleteEntity as canDeleteObservation,
+  canEditEntity as canEditObservation,
+  canPublishEntity as canPublishObservation,
+  getAllRoles,
+  getAutomaticRoles,
   getPermissionsForRoles,
   hasPermission,
-  canEditEntity as canEditObservation,
-  canDeleteEntity as canDeleteObservation,
-  canPublishEntity as canPublishObservation,
-  getAutomaticRoles,
-  getAllRoles,
-} from './rbac-generic'
+} from "./rbac-generic";
 
-import { canReadEntity } from './rbac-generic'
+import { canReadEntity } from "./rbac-generic";
 
 /**
  * Check if user can read an observation
@@ -21,7 +21,7 @@ import { canReadEntity } from './rbac-generic'
 export function canReadObservation(
   roles: Role[],
   observation: OwnedEntity,
-  userId?: string
+  userId?: string,
 ): boolean {
-  return canReadEntity(roles, observation, userId)
+  return canReadEntity(roles, observation, userId);
 }

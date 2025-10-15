@@ -1,5 +1,5 @@
-import { Role, Permission, ROLE_PERMISSIONS } from '@/types/rbac'
-import { OwnedEntity } from '@/types/revision'
+import { Permission, ROLE_PERMISSIONS, Role } from "@/types/rbac";
+import type { OwnedEntity } from "@/types/revision";
 
 /**
  * Generic RBAC utilities for version-controlled entities
@@ -10,22 +10,22 @@ import { OwnedEntity } from '@/types/revision'
  * Get all permissions for a given set of roles
  */
 export function getPermissionsForRoles(roles: Role[]): Permission[] {
-  const permissions = new Set<Permission>()
+  const permissions = new Set<Permission>();
 
   for (const role of roles) {
-    const rolePermissions = ROLE_PERMISSIONS[role] || []
-    rolePermissions.forEach(permission => permissions.add(permission))
+    const rolePermissions = ROLE_PERMISSIONS[role] || [];
+    rolePermissions.forEach((permission) => permissions.add(permission));
   }
 
-  return Array.from(permissions)
+  return Array.from(permissions);
 }
 
 /**
  * Check if a user with given roles has a specific permission
  */
 export function hasPermission(roles: Role[], permission: Permission): boolean {
-  const permissions = getPermissionsForRoles(roles)
-  return permissions.includes(permission)
+  const permissions = getPermissionsForRoles(roles);
+  return permissions.includes(permission);
 }
 
 /**
@@ -34,24 +34,31 @@ export function hasPermission(roles: Role[], permission: Permission): boolean {
 export function canReadEntity(
   roles: Role[],
   entity: OwnedEntity,
-  userId?: string
+  userId?: string,
 ): boolean {
   // Public can read published entities
-  if (entity.published && hasPermission(roles, Permission.READ_PUBLISHED_OBSERVATIONS)) {
-    return true
+  if (
+    entity.published &&
+    hasPermission(roles, Permission.READ_PUBLISHED_OBSERVATIONS)
+  ) {
+    return true;
   }
 
   // Can read all entities (moderator)
   if (hasPermission(roles, Permission.READ_ALL_OBSERVATIONS)) {
-    return true
+    return true;
   }
 
   // Can read own entities
-  if (userId && entity.owner === userId && hasPermission(roles, Permission.READ_OWN_OBSERVATIONS)) {
-    return true
+  if (
+    userId &&
+    entity.owner === userId &&
+    hasPermission(roles, Permission.READ_OWN_OBSERVATIONS)
+  ) {
+    return true;
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -59,13 +66,16 @@ export function canReadEntity(
  */
 export function canEditEntity(
   roles: Role[],
-  entity: {owner: string},
-  userId?: string
+  entity: { owner: string },
+  userId?: string,
 ): boolean {
-  if (!userId) return false
+  if (!userId) return false;
 
   // Can only edit own entities
-  return entity.owner === userId && hasPermission(roles, Permission.EDIT_OWN_OBSERVATIONS)
+  return (
+    entity.owner === userId &&
+    hasPermission(roles, Permission.EDIT_OWN_OBSERVATIONS)
+  );
 }
 
 /**
@@ -74,19 +84,23 @@ export function canEditEntity(
 export function canDeleteEntity(
   roles: Role[],
   entity: { owner: string },
-  userId?: string
+  userId?: string,
 ): boolean {
   // Can delete all entities (moderator)
   if (hasPermission(roles, Permission.DELETE_ALL_OBSERVATIONS)) {
-    return true
+    return true;
   }
 
   // Can delete own entities
-  if (userId && entity.owner === userId && hasPermission(roles, Permission.DELETE_OWN_OBSERVATIONS)) {
-    return true
+  if (
+    userId &&
+    entity.owner === userId &&
+    hasPermission(roles, Permission.DELETE_OWN_OBSERVATIONS)
+  ) {
+    return true;
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -95,32 +109,36 @@ export function canDeleteEntity(
 export function canPublishEntity(
   roles: Role[],
   entity: OwnedEntity,
-  userId?: string
+  userId?: string,
 ): boolean {
   // Can publish all entities (moderator)
   if (hasPermission(roles, Permission.PUBLISH_ALL_OBSERVATIONS)) {
-    return true
+    return true;
   }
 
   // Can publish own entities (validated user)
-  if (userId && entity.owner === userId && hasPermission(roles, Permission.PUBLISH_OWN_OBSERVATIONS)) {
-    return true
+  if (
+    userId &&
+    entity.owner === userId &&
+    hasPermission(roles, Permission.PUBLISH_OWN_OBSERVATIONS)
+  ) {
+    return true;
   }
 
-  return false
+  return false;
 }
 
 /**
  * Get automatic roles for a user based on their authentication status
  */
 export function getAutomaticRoles(isAuthenticated: boolean): Role[] {
-  const roles: Role[] = [Role.PUBLIC]
+  const roles: Role[] = [Role.PUBLIC];
 
   if (isAuthenticated) {
-    roles.push(Role.AUTHENTICATED_USER)
+    roles.push(Role.AUTHENTICATED_USER);
   }
 
-  return roles
+  return roles;
 }
 
 /**
@@ -132,15 +150,15 @@ export function getAutomaticRoles(isAuthenticated: boolean): Role[] {
  * Legacy support: ADMIN_USER_ID still works for backward compatibility.
  */
 export function isAdminUser(userId?: string, userEmail?: string): boolean {
-  if (!userId) return false
+  if (!userId) return false;
 
   // Legacy: Check by NextAuth user ID (for backward compatibility)
-  const adminUserId = process.env.ADMIN_USER_ID
+  const adminUserId = process.env.ADMIN_USER_ID;
   if (adminUserId && userId === adminUserId) {
-    return true
+    return true;
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -148,14 +166,19 @@ export function isAdminUser(userId?: string, userEmail?: string): boolean {
  * @deprecated Use isAdminUser instead
  */
 export function isRootUser(userId: string): boolean {
-  return isAdminUser(userId)
+  return isAdminUser(userId);
 }
 
 /**
  * Get all roles for a user including automatic roles and admin roles
  */
-export function getAllRoles(userRoles: Role[], isAuthenticated: boolean, userId?: string, userEmail?: string): Role[] {
-  const automaticRoles = getAutomaticRoles(isAuthenticated)
+export function getAllRoles(
+  userRoles: Role[],
+  isAuthenticated: boolean,
+  userId?: string,
+  userEmail?: string,
+): Role[] {
+  const automaticRoles = getAutomaticRoles(isAuthenticated);
 
   // If user is admin, grant all roles
   if (isAdminUser(userId, userEmail)) {
@@ -165,9 +188,9 @@ export function getAllRoles(userRoles: Role[], isAuthenticated: boolean, userId?
       Role.VALIDATED_USER,
       Role.MODERATOR,
       Role.SECURITY_ADMIN,
-    ]
+    ];
   }
 
-  const allRoles = new Set([...automaticRoles, ...userRoles])
-  return Array.from(allRoles)
+  const allRoles = new Set([...automaticRoles, ...userRoles]);
+  return Array.from(allRoles);
 }

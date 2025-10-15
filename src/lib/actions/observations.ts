@@ -1,13 +1,20 @@
-import { RevisionController } from './revision-controller'
-import { ObservationFields, ObservationRevisionDocument, COLLECTIONS } from '@/types/models'
-import {Db, Filter} from 'mongodb'
+import { Db, type Filter } from "mongodb";
+import {
+  COLLECTIONS,
+  type ObservationFields,
+  type ObservationRevisionDocument,
+} from "@/types/models";
+import { RevisionController } from "./revision-controller";
 
 /**
  * ObservationController - extends RevisionController with geo search
  */
-export class ObservationController extends RevisionController<ObservationFields, ObservationRevisionDocument> {
+export class ObservationController extends RevisionController<
+  ObservationFields,
+  ObservationRevisionDocument
+> {
   constructor() {
-    super(COLLECTIONS.OBSERVATION_REVISIONS)
+    super(COLLECTIONS.OBSERVATION_REVISIONS);
   }
 
   /**
@@ -19,20 +26,20 @@ export class ObservationController extends RevisionController<ObservationFields,
     minLng: number,
     maxLng: number,
     published?: boolean,
-    userId?: string
+    userId?: string,
   ): Promise<ObservationRevisionDocument[]> {
     const geoFilter: Filter<ObservationRevisionDocument> = {
       location: {
         $geoWithin: {
           $box: [
             [minLng, minLat],
-            [maxLng, maxLat]
-          ]
-        }
-      }
-    } as any
+            [maxLng, maxLat],
+          ],
+        },
+      },
+    } as any;
 
-    return await super.searchObjects(userId, published, geoFilter)
+    return await super.searchObjects(userId, published, geoFilter);
   }
 
   /**
@@ -43,21 +50,21 @@ export class ObservationController extends RevisionController<ObservationFields,
     latitude: number,
     maxDistanceMeters: number,
     published?: boolean,
-    userId?: string
+    userId?: string,
   ): Promise<ObservationRevisionDocument[]> {
     const geoFilter: Filter<ObservationRevisionDocument> = {
       location: {
         $near: {
           $geometry: {
-            type: 'Point',
-            coordinates: [longitude, latitude]
+            type: "Point",
+            coordinates: [longitude, latitude],
           },
-          $maxDistance: maxDistanceMeters
-        }
-      }
-    } as any
+          $maxDistance: maxDistanceMeters,
+        },
+      },
+    } as any;
 
-    return await super.searchObjects(userId, published, geoFilter)
+    return await super.searchObjects(userId, published, geoFilter);
   }
 
   /**
@@ -68,19 +75,19 @@ export class ObservationController extends RevisionController<ObservationFields,
     latitude: number,
     radiusMeters: number,
     published?: boolean,
-    userId?: string
+    userId?: string,
   ): Promise<ObservationRevisionDocument[]> {
     const geoFilter: Filter<ObservationRevisionDocument> = {
       location: {
         $geoWithin: {
           $centerSphere: [
             [longitude, latitude],
-            radiusMeters / 6378100 // Convert meters to radians (Earth radius ~6378.1 km)
-          ]
-        }
-      }
-    } as any
+            radiusMeters / 6378100, // Convert meters to radians (Earth radius ~6378.1 km)
+          ],
+        },
+      },
+    } as any;
 
-    return await super.searchObjects(userId, published, geoFilter)
+    return await super.searchObjects(userId, published, geoFilter);
   }
 }
