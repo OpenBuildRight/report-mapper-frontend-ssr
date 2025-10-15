@@ -59,7 +59,7 @@ export function canReadEntity(
  */
 export function canEditEntity(
   roles: Role[],
-  entity: OwnedEntity,
+  entity: {owner: string},
   userId?: string
 ): boolean {
   if (!userId) return false
@@ -73,7 +73,7 @@ export function canEditEntity(
  */
 export function canDeleteEntity(
   roles: Role[],
-  entity: OwnedEntity,
+  entity: { owner: string },
   userId?: string
 ): boolean {
   // Can delete all entities (moderator)

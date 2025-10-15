@@ -22,7 +22,7 @@ export interface ObservationFormData {
 export interface ObservationPhoto {
   id: string
   url: string
-  description: string
+  description?: string
   location?: {
     latitude: number
     longitude: number
