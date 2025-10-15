@@ -90,3 +90,28 @@ the binary data.
 
 ### Tailwind CSS
 [Tailwind CSS](https://tailwindcss.com/) is used for styling. Tailwind CSS is a utility first CSS framework.
+
+## Security
+
+Security consists of two components: authentication and authorization. In general, this application allows any public 
+user to register their own credentials. However, entitlements must be granted by an administrator. 
+
+### OAuth2
+We use [OAuth2](https://oauth.net/2/) for authentication. OAuth2 is a protocol for authenticating users. We are using
+the OAUth2 Authorization Code flow using a confidential client. This means that after authentication the token is 
+stored on the server. By using OAuth2 we can configure the application with any identity provider. However, we may 
+design out OAuth2 in the future in order to make a more compact application.
+
+### Session Cookies
+Client-to-server authentication is performed using short-lived session identifiers stored in HTTPOnly cookies rather
+than storing OAuth tokens directly in the browser. This follows the Backend-for-Frontend (BFF) pattern recommended by
+[RFC 9700 (OAuth 2.0 Security Best Current Practice)](https://datatracker.ietf.org/doc/html/rfc9700) and
+[OAuth 2.0 for Browser-Based Apps](https://datatracker.ietf.org/doc/draft-ietf-oauth-browser-based-apps/).
+
+By using a confidential OAuth client with server-side token storage, we avoid the security risks of storing tokens in
+JavaScript-accessible browser storage (localStorage, sessionStorage). Browser-based storage is vulnerable to XSS
+(Cross-Site Scripting) attacks where malicious JavaScript can steal tokens. HTTPOnly cookies cannot be accessed by
+JavaScript, providing strong protection against token theft. While cookies are subject to CSRF (Cross-Site Request
+Forgery) attacks, these are easier to mitigate through SameSite attributes and CSRF tokens, and are less severe than
+XSS-based token theft because CSRF cannot read response data. The OAuth access and refresh tokens remain entirely
+server-side, indexed by the session identifier, and are never exposed to the browser. 
