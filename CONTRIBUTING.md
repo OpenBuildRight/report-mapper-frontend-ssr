@@ -88,6 +88,10 @@ as well as supporting serving normal REST API endpoints. We use server actions f
 client communication. However, in cases such as image uploads we configure HTTP form uploads ourself for transferring 
 the binary data.
 
+### NextAuth
+[NextAuth](https://next-auth.js.org/) is used for authentication. NextAuth is a library for authenticating users in
+Next.js applications.
+
 ### Tailwind CSS
 [Tailwind CSS](https://tailwindcss.com/) is used for styling. Tailwind CSS is a utility first CSS framework.
 
