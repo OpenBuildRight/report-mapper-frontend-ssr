@@ -5,6 +5,8 @@ full stack application which prioritizes user privacy, anonymity, and transparen
 
 ## Principals
 
+The application development follows the following principles.
+
 ### Transparency and Privacy
 
 A fundamental principle of this application is to protect both users and the server owners by avoiding storing any 
@@ -69,8 +71,35 @@ This application is designed to deploy using a simple stack with minimal compone
 frontend into a single application, we can reduce the cost of hosting this application on small single VPS 
 deployments.
 
-At the same time, we still want to be able to scale up. By using MongoDB as a database, we support infinite horizontal 
-scaling.
+At the same time, we still want to be able to scale up cost effectively when an application becomes heavily used.
+By using MongoDB as a database, we support infinite horizontal scaling. By using Minio for object storage, we are able
+to leverage scalable object stores across many cloud providers or we can host our own object storage service.
 
 ### Cloud Agnostic
 This application is independent of proprietary cloud provider APIs.
+
+## Required Components
+
+In addition to this application, the following components are required.
+
+1. Report Mapper NextJs Application
+2. MongoDB Database
+3. Minio Compatible Object Storage
+4. OAuth2 Identity Provider
+
+
+
+```mermaid
+graph TD
+    subgraph NEXT[1. Report Mapper NextJs Application]
+        SRV["Node Server"] 
+        CLT["Browser"]
+    end
+    DB[("2. MongoDB Database")]
+    OBJ[("3. Minio Object Storage")]
+    IDP["4. OAuth2 Identity Provider"]
+    CLT <--> SRV
+    SRV <--> DB
+    SRV <--> OBJ
+    CLT <--> IDP <--> SRV
+```
