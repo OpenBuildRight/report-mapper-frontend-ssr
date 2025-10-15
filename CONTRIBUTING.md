@@ -63,3 +63,30 @@ file is used to configure the keycloak service after it starts up.
 
 The setup script [scripts/setup-local-env.ts](scripts/setup-local-env.ts) also writes environment variables to
 [.env.local](.env.local) which correspond to the settings in the docker containers.
+
+## Technology Stack
+This application uses the following primary components.
+
+### Typescript
+[Typescript](https://www.typescriptlang.org/) is used for the language. Typescript is a superset of javascript that
+adds static typing to the language. Typescript is used for the backend and client side code.
+
+### Node
+[Node](https://nodejs.org/en) is used for the runtime. Node is a javascript runtime that is used for the backend.
+
+### React
+[React](https://reactjs.org/) is used for the frontend. React is a javascript library for building user interfaces.
+React is used for the frontend.
+
+### Next.js
+[Next.js](https://nextjs.org/) is used for the framework. Next.js is a full stack framework used for the front end 
+browser application and client side HTML rendering, server side HTML rendering and backend logic. Next.js abstracts
+away much of the backend API using features such as 
+[server side rendering](https://nextjs.org/docs/pages/building-your-application/rendering/server-side-rendering) and
+[Server Actions](https://nextjs.org/docs/14/app/building-your-application/data-fetching/server-actions-and-mutations),
+as well as supporting serving normal REST API endpoints. We use server actions for all JSON serializable server to 
+client communication. However, in cases such as image uploads we configure HTTP form uploads ourself for transferring 
+the binary data.
+
+### Tailwind CSS
+[Tailwind CSS](https://tailwindcss.com/) is used for styling. Tailwind CSS is a utility first CSS framework.
