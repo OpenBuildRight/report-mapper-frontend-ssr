@@ -7,7 +7,7 @@ full stack application which prioritizes user privacy, anonymity, and transparen
 
 The application development follows the following principles.
 
-### Transparency and Privacy
+### Data Autonomy: Transparency, Privacy, and Security
 
 A fundamental principle of this application is to protect both users and the server owners by avoiding storing any 
 personally identifiable information or user content on the server which is not ultimately public. Users should be able 
@@ -28,7 +28,7 @@ contributing.
 
 The application has the following features.
 
-### GIS Mapping of Report Observations
+### Geolocation Mapping of Report Observations
 This application will show user submitted reports on a map. Each report includes metadata such as text descriptions,
 geolocation, and photos.
 
@@ -45,13 +45,19 @@ phone numbers.
 
 ### Report Reviewing
 Administrators can review reports before they are published. Administrators can also grant some users who have shown a 
-consistent record or reporting accurate information access to self publish. 
+consistent record or reporting accurate information access to self-publish. 
 
-### Transparency
+### Transparent Data Model
 In general, user submitted information should be publicly available to remove the incentive for malicious parties
-or organizations to attempt to gain access. This includes user submitted profile information. If a user choses to enter 
+or organizations to attempt to gain access. This includes user submitted profile information. If a user chooses to enter 
 metadata which identifies themselves, this information should be clearly publicly available to protect the 
 owners of the server.
+
+While some data such as authenticated data must be kept privately, no data should be kept private which if revealed 
+could identify a user or provide additional information about a user's activity, or location.
+
+When user submits reports, we should also make a best effort to inform them of the impact on their privacy and to 
+remove unnecessary hidden data exposure such as unnecessary photo metadata.
 
 ### Authenticated Report Submission
 Only authenticated users should be able to submit reports. While the users may register a username and credentials 
@@ -86,8 +92,6 @@ In addition to this application, the following components are required.
 2. MongoDB Database
 3. Minio Compatible Object Storage
 4. OAuth2 Identity Provider
-
-
 
 ```mermaid
 graph TD

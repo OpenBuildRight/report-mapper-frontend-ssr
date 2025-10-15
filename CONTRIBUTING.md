@@ -1,5 +1,9 @@
 # Contributing
-This is an exciting and important project. Contributors are welcome!
+This is an exciting and important project. Contributors are welcome! We need help. Don't be shy to contribute even if 
+your skills don't perfectly align with the current stack. The reality is that modern frameworks and tooling evolves 
+so fast that everyone is always learning new things. We can all learn new things together.  If you are flexible, 
+eager to learn, have some technical coding background and align with the principles outlined in the 
+[README.md](./README.md) your contributions will be greatly appreciated.
 
 ## Development Environment Setup
 The development environment requires setting up the basic node tooling as
