@@ -1,13 +1,18 @@
 # Contributing
+This is an exciting and important project. Contributors are welcome!
 
 ## Development Environment Setup
+The development environment requires setting up the basic node tooling as
+well as starting several other mock services for the application to connect to.
 
 ### Dependencies
+The following dependencies are needed for local development environment setup. Follow the documentation 
+for each tool.
 
 #### Node
 
 You will first need the right node version installed. The easiest
-way to manage node is with [nvm](https://www.nvmnode.com/). You will
+way to manage [Node](https://nodejs.org/en) is with [nvm](https://www.nvmnode.com/). You will
 then need to enable corepack.
 
 ```shell
@@ -56,5 +61,5 @@ The [local-env-setup/compose.yaml] is used to start the docker services using do
 The [local-env-setup/main.tf]
 file is used to configure the keycloak service after it starts up.
 
-The setup script [scripts/setup-local-env.ts](scripts/setup-local-env.ts) also writes envrionment variables to
-[.env.local](.env.local) which coorespond to the settings in the docker containers.
+The setup script [scripts/setup-local-env.ts](scripts/setup-local-env.ts) also writes environment variables to
+[.env.local](.env.local) which correspond to the settings in the docker containers.
