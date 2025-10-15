@@ -101,6 +101,15 @@ async function main() {
         error('compose.yaml not found in local-env-setup directory')
     }
 
+    console.log("Terraform version.")
+    execVerbose('terraform version', SETUP_DIR)
+
+    console.log("Docker version.")
+    execVerbose('docker version', SETUP_DIR)
+
+    console.log("Docker compose version.")
+    execVerbose('docker compose version', SETUP_DIR)
+
     // Stop and remove existing containers for clean state
     console.log('Cleaning up existing containers...')
     execVerbose('docker compose down -v', SETUP_DIR)

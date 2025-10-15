@@ -123,3 +123,21 @@ JavaScript, providing strong protection against token theft. While cookies are s
 Forgery) attacks, these are easier to mitigate through SameSite attributes and CSRF tokens, and are less severe than
 XSS-based token theft because CSRF cannot read response data. The OAuth access and refresh tokens remain entirely
 server-side, indexed by the session identifier, and are never exposed to the browser. 
+
+### Running The Server Locally
+
+Run the server locally in development mode.
+
+```shell
+pnpm dev
+```
+
+### Running Storybook
+We use [Storybook](https://storybook.js.org/) for developing components and visually inspecting the user experience 
+separate from business logic.
+
+You can start storbybook with the following.
+
+```shell
+pnpm storybook
+```
