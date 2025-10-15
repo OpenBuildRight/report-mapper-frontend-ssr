@@ -1,5 +1,3 @@
-'use server'
-
 import { RevisionController } from './revision-controller'
 import {
     ImageFields,

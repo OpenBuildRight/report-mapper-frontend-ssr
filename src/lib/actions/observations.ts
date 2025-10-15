@@ -1,5 +1,3 @@
-'use server'
-
 import { RevisionController } from './revision-controller'
 import { ObservationFields, ObservationRevisionDocument, COLLECTIONS } from '@/types/models'
 import {Db, Filter} from 'mongodb'

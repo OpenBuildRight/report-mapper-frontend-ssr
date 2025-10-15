@@ -1,15 +1,11 @@
 import { Suspense } from 'react'
-import { ObservationController } from '@/lib/actions/observations'
-import { getAuthContext } from '@/lib/middleware/auth'
+import { searchObjects } from '@/lib/actions/observation-actions'
 import ObservationCard from './ObservationCard'
 import ObservationCardSkeleton from './ObservationCardSkeleton'
 import {ObservationRevisionDocument} from "@/types/models";
 
 export default async function ObservationsList() {
-    const authContext = await getAuthContext()
-    const observationController = new ObservationController()
-
-    const observations = await observationController.searchObjects(
+    const observations = await searchObjects(
         undefined, // userId filter (undefined = all users)
         true,      // published only for non-privileged users (controller handles this)
         undefined  // no additional filter

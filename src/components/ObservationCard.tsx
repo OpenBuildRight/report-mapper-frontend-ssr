@@ -1,4 +1,4 @@
-import { ImageController } from '@/lib/actions/images'
+import { getRevisionWithUrl } from '@/lib/actions/image-actions'
 import { getAuthContext } from '@/lib/middleware/auth'
 import { canEditEntity } from '@/lib/rbac-generic'
 import { Observation } from '@/types/observation'
@@ -24,12 +24,11 @@ export default async function ObservationCard({
     owner,
 }: ObservationCardProps) {
     const authContext = await getAuthContext()
-    const imageController = new ImageController()
 
     // Fetch all images in parallel
     const photos = await Promise.all(
         imageIds.map(async (img) => {
-            const image = await imageController.getRevisionWithUrl(img.id, img.revisionId)
+            const image = await getRevisionWithUrl(img.id, img.revisionId)
             return {
                 id: img.id,
                 url: image.presignedUrl,

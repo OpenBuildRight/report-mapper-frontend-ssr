@@ -1,5 +1,3 @@
-'use server'
-
 import { Collection, Db, Filter, ObjectId } from "mongodb"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -221,24 +219,6 @@ export class RevisionController<S, T extends RevisionDocument & S> {
                 ...dataToInsert,
                 _id: result.insertedId
             } as T;
-    }
-
-    async submitObservation(itemId: string, revisionId: number) : Promise<T> {
-        // Use lightweight metadata check
-        const metadata = await this.getRevisionMetadata(itemId, revisionId);
-
-        if (!(await hasEditAccess(metadata))) {
-            throw new NotAuthorizedError(`User does not have edit access to submit ${itemId}`);
-        }
-
-        const collection = await this.getCollection();
-        await collection.updateOne(
-            { itemId, revisionId } as any,
-            { $set: { submitted: true, updatedAt: new Date() } as any }
-        );
-
-        // Fetch and return the full updated document
-        return await this.getRevision(itemId, revisionId);
     }
 
     async getRevision(itemId: string, revisionId: number) : Promise<T> {
