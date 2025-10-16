@@ -1,5 +1,10 @@
 import { Permission, ROLE_PERMISSIONS, Role } from "@/types/rbac";
 import type { OwnedEntity } from "@/types/revision";
+import {config} from "@/config/env";
+import {getUserRoles} from "@/lib/user-roles";
+import {getServerSession} from "next-auth";
+import {authOptions} from "@/lib/auth";
+import {Session} from "node:inspector";
 
 /**
  * Generic RBAC utilities for version-controlled entities
@@ -131,66 +136,40 @@ export function canPublishEntity(
 /**
  * Get automatic roles for a user based on their authentication status
  */
-export function getAutomaticRoles(isAuthenticated: boolean): Role[] {
-  const roles: Role[] = [Role.PUBLIC];
+export function getAutomaticRoles(isAuthenticated: boolean): Set<Role> {
+  const roles = new Set<Role>([Role.PUBLIC]);
 
   if (isAuthenticated) {
-    roles.push(Role.AUTHENTICATED_USER);
+    roles.add(Role.AUTHENTICATED_USER);
   }
 
   return roles;
 }
 
-/**
- * Check if a user is admin user (from environment variables)
- * Admin user has all roles and permissions in-memory
- *
- * @deprecated This function is deprecated. Use BOOTSTRAP_ROLES env variable instead.
- *
- * Legacy support: ADMIN_USER_ID still works for backward compatibility.
- */
-export function isAdminUser(userId?: string, userEmail?: string): boolean {
-  if (!userId) return false;
-
-  // Legacy: Check by NextAuth user ID (for backward compatibility)
-  const adminUserId = process.env.ADMIN_USER_ID;
-  if (adminUserId && userId === adminUserId) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Check if a user is root user (from environment variables)
- * @deprecated Use isAdminUser instead
- */
-export function isRootUser(userId: string): boolean {
-  return isAdminUser(userId);
+export function getInitialUserRoles(userId? : string) : Set<Role> {
+    if (!userId) return new Set<Role>();
+    config.initialUserRoleAssignments.forEach((assignment) => {
+        if (assignment.userId === userId) {
+            return new Set(assignment.roles);
+        }
+    })
+    return new Set<Role>();
 }
 
 /**
  * Get all roles for a user including automatic roles and admin roles
  */
-export function getAllRoles(
-  userRoles: Role[],
-  isAuthenticated: boolean,
+export async function getAllRoles(
   userId?: string,
-  userEmail?: string,
-): Role[] {
-  const automaticRoles = getAutomaticRoles(isAuthenticated);
-
-  // If user is admin, grant all roles
-  if (isAdminUser(userId, userEmail)) {
-    return [
-      Role.PUBLIC,
-      Role.AUTHENTICATED_USER,
-      Role.VALIDATED_USER,
-      Role.MODERATOR,
-      Role.SECURITY_ADMIN,
-    ];
-  }
-
-  const allRoles = new Set([...automaticRoles, ...userRoles]);
-  return Array.from(allRoles);
+): Promise<Role[]> {
+    const roles = new Set<Role>([Role.PUBLIC]);
+    if (userId !== undefined && userId !== null) {
+        roles.add(Role.AUTHENTICATED_USER);
+    }
+    getInitialUserRoles(userId).forEach((role) => roles.add(role));
+    if (userId) {
+        getUserRoles(userId).then((userRoles) =>  userRoles.forEach((role) => roles.add(role)))
+    }
+    return Array.from(roles);
 }
+

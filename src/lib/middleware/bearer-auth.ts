@@ -56,9 +56,7 @@ export async function verifyBearerToken(
 
     const nextAuthUserId = account.userId.toString();
 
-    // Get user roles from our user_roles table keyed by NextAuth ID
-    const userRoles = await getUserRoles(nextAuthUserId);
-    const roles = getAllRoles(userRoles, true, nextAuthUserId);
+    const roles = await getAllRoles(nextAuthUserId);
 
     return {
       userId: nextAuthUserId,

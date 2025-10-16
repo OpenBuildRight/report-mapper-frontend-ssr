@@ -1,12 +1,12 @@
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import type { NextAuthOptions } from "next-auth";
+import type {Awaitable, DefaultSession, NextAuthOptions} from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 import { config } from "@/config/env";
 import { findBootstrapConfig } from "@/lib/bootstrap-roles";
 import clientPromise from "@/lib/mongodb";
 import { getAllRoles } from "@/lib/rbac";
 import { assignRole, getUserRoles } from "@/lib/user-roles";
-import { Role } from "@/types/rbac";
+import {Session} from "node:inspector";
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
@@ -69,11 +69,8 @@ export const authOptions: NextAuthOptions = {
 
         // Get roles from our separate user_roles table keyed by NextAuth ID
         const userRoles = await getUserRoles(user.id);
-        session.user.roles = getAllRoles(
-          userRoles,
-          true,
+        session.user.roles = await getAllRoles(
           user.id,
-          user.email || undefined,
         );
       }
 

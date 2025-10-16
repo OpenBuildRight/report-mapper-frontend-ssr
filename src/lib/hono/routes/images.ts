@@ -5,7 +5,6 @@ import { ImageController } from "@/lib/actions/images";
 import * as schemas from "@/lib/hono/schemas";
 import { getAuthContext, requireAuth } from "@/lib/middleware/auth";
 import { getMinioClient, uploadImage } from "@/lib/minio";
-import { canReadObservation } from "@/lib/rbac";
 import type { ImageFields } from "@/types/models";
 
 export const imagesApp = new OpenAPIHono();
