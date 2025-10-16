@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
-import { config } from "@/config/env";
+import { config } from "@/config/runtime-config";
 import clientPromise from "@/lib/mongodb";
 import { getAllRoles } from "@/lib/rbac";
 import { getUserRoles } from "@/lib/user-roles";

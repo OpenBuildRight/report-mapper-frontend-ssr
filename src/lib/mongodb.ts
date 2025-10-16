@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { config } from "@/config/env";
+import { config } from "@/config/runtime-config";
 
 const uri = config.mongodb.uri;
 const options = {};

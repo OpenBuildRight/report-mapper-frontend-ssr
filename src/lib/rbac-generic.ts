@@ -1,10 +1,7 @@
 import { Permission, ROLE_PERMISSIONS, Role } from "@/types/rbac";
 import type { OwnedEntity } from "@/types/revision";
-import {config} from "@/config/env";
+import {config} from "@/config/runtime-config";
 import {getUserRoles} from "@/lib/user-roles";
-import {getServerSession} from "next-auth";
-import {authOptions} from "@/lib/auth";
-import {Session} from "node:inspector";
 
 /**
  * Generic RBAC utilities for version-controlled entities

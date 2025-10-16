@@ -181,7 +181,7 @@ MINIO_USE_SSL=false
 
 # Bootstrap Roles Configuration
 # Pre-assign roles to users on first login based on provider and user ID
-BOOTSTRAP_ROLES='[{"provider":"keycloak","userId":"${adminUserId}","roles":["security-admin","moderator","validated-user"]},{"provider":"keycloak","userId":"${devUserId}","roles":["security-admin","moderator","validated-user"]}]'
+INITIAL_USER_ROLES='[{"userId":"${adminUserId}","roles":["security-admin","moderator","validated-user"]},{"userId":"${devUserId}","roles":["security-admin","moderator","validated-user"]}]'
 `;
 
   writeFileSync(ENV_FILE, envContent, "utf-8");

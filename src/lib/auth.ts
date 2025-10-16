@@ -1,12 +1,11 @@
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import type {Awaitable, DefaultSession, NextAuthOptions} from "next-auth";
+import type {NextAuthOptions} from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
-import { config } from "@/config/env";
+import { config } from "@/config/runtime-config";
 import { findBootstrapConfig } from "@/lib/bootstrap-roles";
 import clientPromise from "@/lib/mongodb";
 import { getAllRoles } from "@/lib/rbac";
 import { assignRole, getUserRoles } from "@/lib/user-roles";
-import {Session} from "node:inspector";
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),

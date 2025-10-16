@@ -1,5 +1,5 @@
 import type { Collection, Db } from "mongodb";
-import { config } from "@/config/env";
+import { config } from "@/config/runtime-config";
 import {
   COLLECTIONS,
   type ImageRevisionDocument,
