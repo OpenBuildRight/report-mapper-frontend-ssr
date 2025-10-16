@@ -104,7 +104,7 @@ export function getConfig(): AppConfig {
             ),
             bucketName: getOptionalEnv("MINIO_BUCKET_NAME", "reportmapper"),
         },
-        initialUserRoleAssignments: parseEnv<UserAssignment[]>("INITIAL_USER_ROLE_ASSIGNMENTS", [])
+        initialUserRoleAssignments: parseEnv<UserAssignment[]>("INITIAL_USER_ROLES", [])
     }
 }
 

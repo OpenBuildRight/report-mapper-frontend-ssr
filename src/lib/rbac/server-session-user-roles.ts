@@ -8,9 +8,14 @@ import {getUserRoles} from "@/lib/db/user-roles";
  */
 
 export function getInitialUserRoles(userId? : string) : Set<Role> {
+    console.log("Finding roles for user: " + userId + "")
     if (!userId) return new Set<Role>();
+    console.log(
+        "Initial user role assignments. " + JSON.stringify(config.initialUserRoleAssignments)
+    )
     config.initialUserRoleAssignments.forEach((assignment) => {
         if (assignment.userId === userId) {
+            console.log("Found initial user role assignment for user " + userId + ": " + JSON.stringify(assignment.roles))
             return new Set(assignment.roles);
         }
     })
