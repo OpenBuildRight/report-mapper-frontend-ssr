@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { hasPermission } from "@/lib/rbac";
 import { Permission } from "@/types/rbac";
+
+import {hasPermission} from "@/lib/rbac/permissions";
 
 interface SlideOutMenuProps {
   isOpen: boolean;

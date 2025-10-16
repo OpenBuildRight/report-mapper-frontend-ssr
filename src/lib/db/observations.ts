@@ -4,7 +4,7 @@ import {
   type ObservationFields,
   type ObservationRevisionDocument,
 } from "@/types/models";
-import { RevisionController } from "./revision-controller";
+import { RevisionController } from "../actions/revision-controller";
 
 /**
  * ObservationController - extends RevisionController with geo search

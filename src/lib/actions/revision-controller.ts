@@ -1,7 +1,7 @@
 import { type Collection, Db, type Filter, ObjectId } from "mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getDb } from "@/lib/db";
+import { getDb } from "@/lib/db/db";
 import { Permission, ROLE_PERMISSIONS, Role } from "@/types/rbac";
 
 export interface RevisionDocument {

@@ -6,7 +6,7 @@ import {
   type ImageRevisionDocument,
   type ImageRevisionDocumentWithUrls,
 } from "@/types/models";
-import { RevisionController } from "./revision-controller";
+import { RevisionController } from "../actions/revision-controller";
 
 /**
  * ImageController - extends RevisionController for image management

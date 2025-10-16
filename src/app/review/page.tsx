@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import Button from "@/components/Button";
 import { authOptions } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
 import { Permission } from "@/types/rbac";
-import {getSession} from "next-auth/react";
+
+import {hasPermission} from "@/lib/rbac/permissions";
 
 async function getPendingObservations() {
   try {
@@ -31,7 +31,7 @@ async function getPendingObservations() {
 }
 
 export default async function ReviewPage() {
-  const session = await getSession()
+  const session = await getServerSession(authOptions)
 
   if (!session?.user) {
     redirect("/api/auth/signin");

@@ -6,7 +6,7 @@ import {
   type ObservationRevisionDocument,
   type UserDocument,
 } from "@/types/models";
-import clientPromise from "./mongodb";
+import clientPromise from "../mongodb";
 
 let cachedDb: Db | null = null;
 let initPromise: Promise<void> | null = null;

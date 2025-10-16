@@ -2,9 +2,8 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { config } from "@/config/runtime-config";
 import clientPromise from "@/lib/mongodb";
-import { getAllRoles } from "@/lib/rbac";
-import { getUserRoles } from "@/lib/user-roles";
 import type { Role } from "@/types/rbac";
+import {getAllRoles} from "@/lib/rbac/server-session-user-roles";
 
 interface BearerAuthContext {
   userId: string;

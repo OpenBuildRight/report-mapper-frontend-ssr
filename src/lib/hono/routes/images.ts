@@ -1,7 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import { v4 as uuidv4 } from "uuid";
-import { ImageController } from "@/lib/actions/images";
+import { ImageController } from "@/lib/db/images";
 import * as schemas from "@/lib/hono/schemas";
 import { getAuthContext, requireAuth } from "@/lib/middleware/auth";
 import { getMinioClient, uploadImage } from "@/lib/minio";

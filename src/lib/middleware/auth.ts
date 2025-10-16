@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
 import { type Permission, Role } from "@/types/rbac";
 import { extractBearerToken, verifyBearerToken } from "./bearer-auth";
+
+import {hasPermission} from "@/lib/rbac/permissions";
 
 export interface AuthContext {
   userId?: string;
