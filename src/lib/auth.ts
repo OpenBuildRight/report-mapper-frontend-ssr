@@ -4,6 +4,7 @@ import { username } from "better-auth/plugins";
 import { twoFactor } from "better-auth/plugins";
 import { mongoClient, db } from "@/lib/mongodb";
 import { getUserRoles } from "@/lib/db/user-roles";
+import { validateUsername } from "@/lib/validation";
 
 // Helper function to check if email is a dummy email
 export const isDummyEmail = (email: string): boolean => {
@@ -54,7 +55,16 @@ export const auth = betterAuth({
         }
     },
     plugins: [
-        username(), // Enable username-based authentication
+        username({
+            // Use shared validation logic
+            minUsernameLength: 3,
+            maxUsernameLength: 30,
+            usernameValidator: (username) => {
+                // Return true if valid, false if invalid
+                const error = validateUsername(username);
+                return error === null;
+            }
+        }),
         twoFactor({
             issuer: "Report Mapper", // Name shown in authenticator apps
             otpOptions: {
