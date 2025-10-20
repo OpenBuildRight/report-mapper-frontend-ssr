@@ -7,37 +7,42 @@ import Button from "@/components/Button";
 import FormInput from "@/components/FormInput";
 import ErrorAlert from "@/components/ErrorAlert";
 import CenteredCard from "@/components/CenteredCard";
+import Link from "next/link";
 
-export default function SignInPage() {
+function SignInForm() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const searchParams = useSearchParams();
+    const callbackURL = searchParams.get("callbackURL") || "/";
 
     const handleSubmit = async (e: React.FormEvent) => {
-        const searchParams = useSearchParams();
-        const callbackURL = searchParams.get("callbackURL") || "/";
         e.preventDefault();
         setError("");
         setIsLoading(true);
 
-        try {
-            await authClient.signIn.username({
-                username,
-                password,
-                callbackURL,
-            });
-            // better-auth handles the redirect automatically
-        } catch (err: any) {
-            setError(err.message || "Failed to sign in. Please check your credentials.");
+        const { data, error } = await authClient.signIn.username({
+            username,
+            password,
+        });
+
+        if (error) {
+            setError(error.message || "Failed to sign in. Please check your credentials.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Sign in successful, now redirect manually
+        if (data) {
+            window.location.href = callbackURL;
+        } else {
             setIsLoading(false);
         }
     };
 
     return (
-        <CenteredCard title="Sign in to your account">
-            <Suspense>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4">
                         <FormInput
                             id="username"
@@ -65,7 +70,7 @@ export default function SignInPage() {
 
                     <ErrorAlert message={error} />
 
-                    <div>
+                    <div className="space-y-4">
                         <Button
                             type="submit"
                             variant="primary"
@@ -74,8 +79,25 @@ export default function SignInPage() {
                         >
                             {isLoading ? "Signing in..." : "Sign in"}
                         </Button>
+
+                        <div className="text-center">
+                            <Link
+                                href="/sign-up"
+                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                            >
+                                Don't have an account? Sign up
+                            </Link>
+                        </div>
                     </div>
                 </form>
+    );
+}
+
+export default function SignInPage() {
+    return (
+        <CenteredCard title="Sign in to your account">
+            <Suspense>
+                <SignInForm />
             </Suspense>
         </CenteredCard>
     );
