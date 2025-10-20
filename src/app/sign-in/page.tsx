@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Button from "@/components/Button";
 import FormInput from "@/components/FormInput";
 import ErrorAlert from "@/components/ErrorAlert";
-import CenteredCard from "@/components/CenteredCard";
+import Card from "@/components/Card";
 import Link from "next/link";
 
 function SignInForm() {
@@ -95,10 +95,10 @@ function SignInForm() {
 
 export default function SignInPage() {
     return (
-        <CenteredCard title="Sign in to your account">
+        <Card title="Sign in to your account">
             <Suspense>
                 <SignInForm />
             </Suspense>
-        </CenteredCard>
+        </Card>
     );
 }
