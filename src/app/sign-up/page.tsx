@@ -1,14 +1,15 @@
 "use client";
 
-import { authClient } from "@/components/SessionProvider";
-import { Suspense, useState } from "react";
+import {Suspense, useContext, useState} from "react";
 import { useSearchParams } from "next/navigation";
 import Button from "@/components/Button";
 import FormInput from "@/components/FormInput";
 import ErrorAlert from "@/components/ErrorAlert";
 import Card from "@/components/Card";
 import Link from "next/link";
-import { validateUsername, validatePassword, validateName, validateEmail } from "@/lib/validation";
+import { validateUsername, validatePassword, validateName} from "@/lib/validation";
+import {AuthClientType} from "@/lib/auth-client";
+import {AuthClientContext} from "@/context/AuthClientContext";
 
 function SignUpForm() {
     const [username, setUsername] = useState("");
@@ -19,6 +20,7 @@ function SignUpForm() {
     const [isLoading, setIsLoading] = useState(false);
     const searchParams = useSearchParams();
     const callbackURL = searchParams.get("callbackURL") || "/";
+    const authClient : AuthClientType | null = useContext(AuthClientContext);
 
     // Field-specific errors
     const [usernameError, setUsernameError] = useState("");
@@ -101,7 +103,7 @@ function SignUpForm() {
     // Async username availability check - only on blur
     const checkUsernameAvailability = async () => {
         // Only check if basic validation passes
-        if (usernameError || usernameStatus === 'invalid') {
+        if (usernameError || usernameStatus === 'invalid' || !authClient) {
             return;
         }
 
@@ -131,9 +133,19 @@ function SignUpForm() {
     const isFormValid = Object.values(validationState).every(v => v);
 
     const handleSubmit = async (e: React.FormEvent) => {
+        if (!authClient) {
+            console.error("Authentication client not initialized");
+            return;
+        }
+
+        if (!isFormValid) {
+            setError("Please fill in all required fields.");
+        }
+
         e.preventDefault();
         setError("");
         setIsLoading(true);
+
 
         // Better-auth requires email, so generate a dummy one if not provided
         // Dummy emails (ending with @local.username) skip email verification

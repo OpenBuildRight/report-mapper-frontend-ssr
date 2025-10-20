@@ -35,6 +35,12 @@ interface AppConfig {
     initialUserRoleAssignments: UserAssignment[]
 }
 
+export interface RuntimeClientConfig {
+    betterAuth: {
+        url: string;
+    }
+}
+
 function getRequiredEnv(key: string): string {
     const value = process.env[key];
     if (!value) {

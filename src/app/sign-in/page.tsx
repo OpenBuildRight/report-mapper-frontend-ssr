@@ -1,13 +1,14 @@
 "use client";
 
-import { authClient } from "@/components/SessionProvider";
-import { Suspense, useState } from "react";
+import {Suspense, useContext, useState} from "react";
 import { useSearchParams } from "next/navigation";
 import Button from "@/components/Button";
 import FormInput from "@/components/FormInput";
 import ErrorAlert from "@/components/ErrorAlert";
 import Card from "@/components/Card";
 import Link from "next/link";
+import {AuthClientContext} from "@/context/AuthClientContext";
+import {AuthClientType} from "@/lib/auth-client";
 
 function SignInForm() {
     const [username, setUsername] = useState("");
@@ -16,8 +17,13 @@ function SignInForm() {
     const [isLoading, setIsLoading] = useState(false);
     const searchParams = useSearchParams();
     const callbackURL = searchParams.get("callbackURL") || "/";
+    const authClient : AuthClientType | null = useContext(AuthClientContext);
 
     const handleSubmit = async (e: React.FormEvent) => {
+        if (!authClient) {
+            console.error("Authentication client not initialized");
+            return;
+        }
         e.preventDefault();
         setError("");
         setIsLoading(true);
@@ -42,7 +48,7 @@ function SignInForm() {
     };
 
     return (
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} >
                     <div className="space-y-4">
                         <FormInput
                             id="username"
@@ -75,7 +81,7 @@ function SignInForm() {
                             type="submit"
                             variant="primary"
                             className="w-full"
-                            disabled={isLoading}
+                            disabled={isLoading || !username || !password || !authClient}
                         >
                             {isLoading ? "Signing in..." : "Sign in"}
                         </Button>
