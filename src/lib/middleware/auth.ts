@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { type Permission, Role } from "@/types/rbac";
-import { extractBearerToken, verifyBearerToken } from "./bearer-auth";
 import {hasPermission} from "@/lib/rbac/permissions";
 
 export interface AuthContext {
@@ -18,20 +17,6 @@ export interface AuthContext {
 export async function getAuthContext(
   request?: Request | NextRequest,
 ): Promise<AuthContext> {
-  // First, try bearer token authentication (for API access)
-  if (request) {
-    const bearerToken = extractBearerToken(request);
-    if (bearerToken) {
-      const bearerAuth = await verifyBearerToken(bearerToken);
-      if (bearerAuth) {
-        return {
-          ...bearerAuth,
-          authMethod: "bearer",
-        };
-      }
-      // Invalid bearer token - fall through to session check
-    }
-  }
 
   // Fall back to session authentication (for browser)
   const session = request ? await auth.api.getSession({

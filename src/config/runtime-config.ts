@@ -15,17 +15,6 @@ interface AppConfig {
         url: string;
         secret: string;
     }
-    // Keycloak Configuration
-    keycloak: {
-        issuer: string;
-        clientId: string;
-        clientSecret: string;
-    };
-
-    // Backend API Configuration
-    backend: {
-        baseUrl: string;
-    };
 
     // Environment
     nodeEnv: string;
@@ -79,14 +68,6 @@ export function getConfig(): AppConfig {
         betterAuth: {
             url: getRequiredEnv("BETTER_AUTH_URL"),
             secret: getRequiredEnv("BETTER_AUTH_SECRET"),
-        },
-        keycloak: {
-            issuer: getRequiredEnv("KEYCLOAK_ISSUER"),
-            clientId: getRequiredEnv("KEYCLOAK_CLIENT_ID"),
-            clientSecret: getRequiredEnv("KEYCLOAK_CLIENT_SECRET"),
-        },
-        backend: {
-            baseUrl: getRequiredEnv("BACKEND_API_URL"),
         },
         nodeEnv: getOptionalEnv("NODE_ENV", "development"),
         mongodb: {

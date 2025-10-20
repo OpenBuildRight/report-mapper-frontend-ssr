@@ -46,10 +46,18 @@ export default function UserProfile() {
     await authClient.signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/"; } } });
   };
 
+  const handleLogin = async () => {
+    // Get current URL to redirect back after login
+    const callbackURL = window.location.href;
+
+    // Redirect to the sign-in page with callback
+    window.location.href = `/sign-in?callbackURL=${encodeURIComponent(callbackURL)}`;
+  };
+
   if (!session) {
     return (
       <Button
-        onClick={() => window.location.href = "/api/auth/sign-in"}
+        onClick={handleLogin}
         variant="primary"
         className="flex items-center gap-2"
       >
