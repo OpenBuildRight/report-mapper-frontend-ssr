@@ -11,11 +11,10 @@ interface UserAssignment {
 
 interface AppConfig {
     // NextAuth Configuration
-    nextAuth: {
+    betterAuth: {
         url: string;
         secret: string;
-    };
-
+    }
     // Keycloak Configuration
     keycloak: {
         issuer: string;
@@ -77,9 +76,9 @@ function parseEnv<T>(key: string, defaultValue: T): T {
  */
 export function getConfig(): AppConfig {
     return {
-        nextAuth: {
-            url: getRequiredEnv("NEXTAUTH_URL"),
-            secret: getRequiredEnv("NEXTAUTH_SECRET"),
+        betterAuth: {
+            url: getRequiredEnv("BETTER_AUTH_URL"),
+            secret: getRequiredEnv("BETTER_AUTH_SECRET"),
         },
         keycloak: {
             issuer: getRequiredEnv("KEYCLOAK_ISSUER"),

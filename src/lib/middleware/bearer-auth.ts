@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { config } from "@/config/runtime-config";
-import clientPromise from "@/lib/mongodb";
+import { mongoClient, db } from "@/lib/mongodb";
 import type { Role } from "@/types/rbac";
 import {getAllRoles} from "@/lib/rbac/server-session-user-roles";
 
@@ -40,7 +40,6 @@ export async function verifyBearerToken(
     const email = payload.email as string;
 
     // Map Keycloak sub to NextAuth user ID via accounts table
-    const db = (await clientPromise).db();
     const account = (await db.collection("accounts").findOne({
       provider: "keycloak",
       providerAccountId: keycloakSub,

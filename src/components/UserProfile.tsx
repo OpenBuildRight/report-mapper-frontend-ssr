@@ -1,12 +1,12 @@
 "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
+import { authClient } from "@/components/SessionProvider";
 import { useEffect, useRef, useState } from "react";
 import { LoginIcon } from "@/components/icons/LoginIcon";
 import Button from "./Button";
 
 export default function UserProfile() {
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [showDetails, setShowDetails] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +29,7 @@ export default function UserProfile() {
     };
   }, [showDetails]);
 
-  if (status === "loading") {
+  if (isPending) {
     return (
       <Button variant="secondary" disabled>
         Loading...
@@ -42,16 +42,14 @@ export default function UserProfile() {
     localStorage.clear();
     sessionStorage.clear();
 
-    // Sign out from NextAuth - this clears the session from MongoDB and the session cookie
-    await signOut({ callbackUrl: "/" });
+    // Sign out from better-auth
+    await authClient.signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/"; } } });
   };
 
   if (!session) {
     return (
       <Button
-        onClick={() =>
-          signIn("keycloak", { callbackUrl: window.location.href })
-        }
+        onClick={() => window.location.href = "/api/auth/sign-in"}
         variant="primary"
         className="flex items-center gap-2"
       >
@@ -88,11 +86,11 @@ export default function UserProfile() {
                 </div>
               )}
 
-              {session.user?.roles && session.user.roles.length > 0 && (
+              {(session.user as any)?.roles && (session.user as any).roles.length > 0 && (
                 <div className="flex flex-col">
                   <span className="font-semibold text-gray-400">Roles:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {session.user.roles.map((role) => (
+                    {(session.user as any).roles.map((role: string) => (
                       <span
                         key={role}
                         className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-900 text-blue-200"

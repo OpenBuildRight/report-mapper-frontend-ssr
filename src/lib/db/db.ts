@@ -1,51 +1,26 @@
-import type { Collection, Db } from "mongodb";
-import { config } from "@/config/runtime-config";
+import type { Collection } from "mongodb";
 import {
   COLLECTIONS,
   type ImageRevisionDocument,
   type ObservationRevisionDocument,
   type UserDocument,
 } from "@/types/models";
-import clientPromise from "../mongodb";
+import { db } from "../mongodb";
 
-let cachedDb: Db | null = null;
-let initPromise: Promise<void> | null = null;
-
-/**
- * Get MongoDB database instance
- */
-export async function getDb(): Promise<Db> {
-  if (cachedDb) {
-    return cachedDb;
-  }
-
-  const client = await clientPromise;
-  const db = client.db(config.mongodb.database);
-  cachedDb = db;
-
-  // Initialize database indexes on first access (idempotent)
-  if (!initPromise) {
-    initPromise = initializeDatabase();
-  }
-
-  return db;
-}
+// Re-export db for convenience
+export { db };
 
 /**
  * Get users collection
  */
-export async function getUsersCollection(): Promise<Collection<UserDocument>> {
-  const db = await getDb();
+export function getUsersCollection(): Collection<UserDocument> {
   return db.collection<UserDocument>(COLLECTIONS.USERS);
 }
 
 /**
  * Get observation revisions collection
  */
-export async function getObservationRevisionsCollection(): Promise<
-  Collection<ObservationRevisionDocument>
-> {
-  const db = await getDb();
+export function getObservationRevisionsCollection(): Collection<ObservationRevisionDocument> {
   return db.collection<ObservationRevisionDocument>(
     COLLECTIONS.OBSERVATION_REVISIONS,
   );
@@ -54,10 +29,7 @@ export async function getObservationRevisionsCollection(): Promise<
 /**
  * Get image revisions collection
  */
-export async function getImageRevisionsCollection(): Promise<
-  Collection<ImageRevisionDocument>
-> {
-  const db = await getDb();
+export function getImageRevisionsCollection(): Collection<ImageRevisionDocument> {
   return db.collection<ImageRevisionDocument>(COLLECTIONS.IMAGE_REVISIONS);
 }
 
@@ -67,7 +39,6 @@ export async function getImageRevisionsCollection(): Promise<
  */
 export async function initializeDatabase() {
   try {
-    const db = await getDb();
 
     // Note: 'users' collection is managed by NextAuth - we don't create indexes for it
 

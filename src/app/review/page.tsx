@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
+import { headers } from "next/headers";
 import Button from "@/components/Button";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { Permission } from "@/types/rbac";
-
 import {hasPermission} from "@/lib/rbac/permissions";
 
 async function getPendingObservations() {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const response = await fetch(
       `${baseUrl}/api/observations?submitted=true&published=false&sortBy=revisionCreated&sortOrder=desc`,
       {
@@ -31,16 +30,18 @@ async function getPendingObservations() {
 }
 
 export default async function ReviewPage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   if (!session?.user) {
-    redirect("/api/auth/signin");
+    redirect("/api/auth/sign-in");
   }
 
   // Check if user has permission to review observations
   // Roles are already populated in the session from user_roles collection
   const canReview = hasPermission(
-    session.user.roles,
+    (session.user as any).roles || [],
     Permission.READ_ALL_OBSERVATIONS,
   );
 

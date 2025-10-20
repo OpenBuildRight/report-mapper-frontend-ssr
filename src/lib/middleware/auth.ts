@@ -1,9 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { type Permission, Role } from "@/types/rbac";
 import { extractBearerToken, verifyBearerToken } from "./bearer-auth";
-
 import {hasPermission} from "@/lib/rbac/permissions";
 
 export interface AuthContext {
@@ -36,7 +34,9 @@ export async function getAuthContext(
   }
 
   // Fall back to session authentication (for browser)
-  const session = await getServerSession(authOptions);
+  const session = request ? await auth.api.getSession({
+    headers: request.headers,
+  }) : null;
 
   if (!session || !session.user) {
     return {
@@ -47,7 +47,7 @@ export async function getAuthContext(
 
   const userId = session.user.id;
   // Use roles from session (cached) instead of querying DB
-  const roles = session.user.roles || [Role.PUBLIC];
+  const roles = (session.user as any).roles || [Role.PUBLIC];
 
   return {
     userId,

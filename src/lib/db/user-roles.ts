@@ -1,6 +1,6 @@
 import type { Collection } from "mongodb";
 import type { Role } from "@/types/rbac";
-import { getDb } from "./db";
+import { db } from "./db";
 
 export interface UserRoleDocument {
   userId: string; // Keycloak sub claim
@@ -11,8 +11,7 @@ export interface UserRoleDocument {
 
 const COLLECTION_NAME = "user_roles";
 
-async function getUserRolesCollection(): Promise<Collection<UserRoleDocument>> {
-  const db = await getDb();
+function getUserRolesCollection(): Collection<UserRoleDocument> {
   return db.collection<UserRoleDocument>(COLLECTION_NAME);
 }
 
@@ -20,7 +19,7 @@ async function getUserRolesCollection(): Promise<Collection<UserRoleDocument>> {
  * Get roles for a user by their ID (Keycloak sub)
  */
 export async function getUserRoles(userId: string): Promise<Role[]> {
-  const collection = await getUserRolesCollection();
+  const collection = getUserRolesCollection();
   const doc = await collection.findOne({ userId });
   return (doc?.roles as Role[]) || [];
 }
@@ -30,7 +29,7 @@ export async function getUserRoles(userId: string): Promise<Role[]> {
  * Creates the user role document if it doesn't exist
  */
 export async function assignRole(userId: string, role: Role): Promise<void> {
-  const collection = await getUserRolesCollection();
+  const collection = getUserRolesCollection();
 
   await collection.updateOne(
     { userId },
@@ -50,7 +49,7 @@ export async function assignRole(userId: string, role: Role): Promise<void> {
  * Remove a role from a user
  */
 export async function removeRole(userId: string, role: Role): Promise<void> {
-  const collection = await getUserRolesCollection();
+  const collection = getUserRolesCollection();
 
   await collection.updateOne(
     { userId },
@@ -65,7 +64,6 @@ export async function removeRole(userId: string, role: Role): Promise<void> {
  * Initialize user_roles collection indexes
  */
 export async function initializeUserRolesIndexes(): Promise<void> {
-  const db = await getDb();
   await db
     .collection(COLLECTION_NAME)
     .createIndex({ userId: 1 }, { unique: true });
