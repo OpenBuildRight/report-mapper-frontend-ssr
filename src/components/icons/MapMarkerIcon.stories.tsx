@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs";
 import MapMarkerIcon from "./MapMarkerIcon";
 
 const meta: Meta<typeof MapMarkerIcon> = {

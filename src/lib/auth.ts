@@ -1,86 +1,93 @@
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import type { NextAuthOptions } from "next-auth";
-import KeycloakProvider from "next-auth/providers/keycloak";
-import { config } from "@/config/env";
-import { findBootstrapConfig } from "@/lib/bootstrap-roles";
-import clientPromise from "@/lib/mongodb";
-import { getAllRoles } from "@/lib/rbac";
-import { assignRole, getUserRoles } from "@/lib/user-roles";
-import { Role } from "@/types/rbac";
+import {betterAuth} from "better-auth";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { username } from "better-auth/plugins";
+import { twoFactor } from "better-auth/plugins";
+import { mongoClient, db } from "@/lib/mongodb";
+import { getUserRoles } from "@/lib/db/user-roles";
+import { validateUsername } from "@/lib/validation";
 
-export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(clientPromise),
-  providers: [
-    KeycloakProvider({
-      clientId: config.keycloak.clientId,
-      clientSecret: config.keycloak.clientSecret,
-      issuer: config.keycloak.issuer,
-      profile(profile) {
-        // Map Keycloak profile to NextAuth user
-        // The 'sub' claim is the Keycloak user ID
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-        };
-      },
-    }),
-  ],
-  session: {
-    strategy: "database", // Database sessions for security (httpOnly cookies, server-side invalidation)
-    maxAge: 60,
-  },
-  callbacks: {
-    async signIn({ user, account }) {
-      if (!account) return true;
-
-      // Check if user matches bootstrap roles configuration
-      const bootstrapConfig = findBootstrapConfig(
-        account.provider,
-        account.providerAccountId,
-      );
-
-      if (bootstrapConfig && user.id) {
-        console.log(
-          "Bootstrap roles found for user",
-          user.id,
-          ". Bootstrap config: ",
-          JSON.stringify(bootstrapConfig),
-        );
-        // Get existing roles for this user
-        const existingRoles = await getUserRoles(user.id);
-
-        // Assign any bootstrap roles that user doesn't already have
-        for (const role of bootstrapConfig.roles) {
-          if (!existingRoles.includes(role)) {
-            await assignRole(user.id, role);
-          }
-        }
-      }
-
-      return true;
-    },
-    async session({ session, user }) {
-      if (session.user) {
-        // Use NextAuth's internal user ID as the canonical identifier
-        // This works across all auth providers (Keycloak, Google, etc.)
-        session.user.id = user.id;
-
-        // Get roles from our separate user_roles table keyed by NextAuth ID
-        const userRoles = await getUserRoles(user.id);
-        session.user.roles = getAllRoles(
-          userRoles,
-          true,
-          user.id,
-          user.email || undefined,
-        );
-      }
-
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/auth/signin",
-  },
+// Helper function to check if email is a dummy email
+export const isDummyEmail = (email: string): boolean => {
+    return email.endsWith("@local.username");
 };
+
+export const auth = betterAuth({
+    database: mongodbAdapter(db, {client: mongoClient}),
+    baseURL: process.env.NEXTAUTH_URL || "http://localhost:3000",
+    secret: process.env.NEXTAUTH_SECRET || "fallback-secret-change-me",
+    emailAndPassword: {
+        enabled: true,
+        requireEmailVerification: false, // Don't block login for unverified emails
+        minPasswordLength: 8,
+    },
+    emailVerification: {
+        async sendVerificationEmail(data, request) {
+            // Only send verification emails for real emails, not dummy ones
+            if (isDummyEmail(data.user.email)) {
+                return; // Skip sending verification for dummy emails
+            }
+
+            // TODO: Implement actual email sending here using your email service
+            // Examples: SendGrid, Resend, Nodemailer, etc.
+            // For now, we log to console for development
+            console.log(`[Email Verification] Send to: ${data.user.email}`);
+            console.log(`[Email Verification] URL: ${data.url}`);
+            console.log(`[Email Verification] Token: ${data.token}`);
+
+            // Example implementation with Resend:
+            // await resend.emails.send({
+            //     from: 'noreply@yourdomain.com',
+            //     to: data.user.email,
+            //     subject: 'Verify your email',
+            //     html: `Click here to verify: <a href="${data.url}">${data.url}</a>`
+            // });
+        },
+        sendOnSignUp: true, // Send verification email when user signs up with real email
+    },
+    user: {
+        // Make email optional
+        additionalFields: {
+            username: {
+                type: "string",
+                required: true,
+                unique: true,
+            }
+        }
+    },
+    plugins: [
+        username({
+            // Use shared validation logic
+            minUsernameLength: 3,
+            maxUsernameLength: 30,
+            usernameValidator: (username) => {
+                // Return true if valid, false if invalid
+                const error = validateUsername(username);
+                return error === null;
+            }
+        }),
+        twoFactor({
+            issuer: "Report Mapper", // Name shown in authenticator apps
+            otpOptions: {
+                period: 30,
+            }
+        })
+    ],
+    session: {
+        expiresIn: 60 * 60 * 24 * 7, // 7 days
+        updateAge: 60 * 60 * 24, // Update session every 24 hours
+    },
+    async onSession(session: any) {
+        if (session.user) {
+            // Add roles to session
+            const roles = await getUserRoles(session.user.id);
+            return {
+                ...session,
+                user: {
+                    ...session.user,
+                    roles,
+                }
+            };
+        }
+        return session;
+    }
+});

@@ -1,30 +1,7 @@
 import { MongoClient } from "mongodb";
-import { config } from "@/config/env";
+import { config } from "@/config/runtime-config";
 
-const uri = config.mongodb.uri;
-const options = {};
-
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
-
-if (config.nodeEnv === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-  };
-
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect();
-  }
-  clientPromise = globalWithMongo._mongoClientPromise;
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
-}
-
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
-export default clientPromise;
+// Create MongoDB client and database instances
+// Connection is lazy - happens on first database operation
+export const mongoClient = new MongoClient(config.mongodb.uri);
+export const db = mongoClient.db(config.mongodb.database);

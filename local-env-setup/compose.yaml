@@ -1,17 +1,6 @@
 # Use for local testing only.
 
 services:
-  idp:
-    image: quay.io/keycloak/keycloak:26.3.2
-    command: start-dev
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: kc_admin_user
-      KC_BOOTSTRAP_ADMIN_PASSWORD: kc_admin_password
-    ports:
-      - "9003:8080"
-    networks:
-      - report-mapper-network
-
   mongodb:
     image: mongo:7
     container_name: report-mapper-mongodb

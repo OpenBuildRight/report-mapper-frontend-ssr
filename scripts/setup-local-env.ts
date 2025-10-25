@@ -61,34 +61,6 @@ function execVerbose(command: string, cwd?: string): void {
   }
 }
 
-async function checkKeycloakHealth(): Promise<boolean> {
-  try {
-    // Just check if Keycloak responds at all (will get 302 redirect)
-    const response = await fetch(`${KEYCLOAK_URL}/`);
-    return response.status === 302 || response.ok;
-  } catch {
-    return false;
-  }
-}
-
-async function waitForKeycloak(): Promise<void> {
-  console.log("Waiting for Keycloak to be ready...");
-
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const isReady = await checkKeycloakHealth();
-
-    if (isReady) {
-      console.log("Keycloak is ready!");
-      return;
-    }
-
-    console.log(`   Attempt ${attempt}/${MAX_ATTEMPTS}...`);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-  }
-
-  error(`Keycloak failed to start after ${MAX_ATTEMPTS} attempts`);
-}
-
 function generateNextAuthSecret(): string {
   return randomBytes(32).toString("base64");
 }
@@ -102,9 +74,6 @@ async function main() {
   if (!existsSync(resolve(SETUP_DIR, "compose.yaml"))) {
     error("compose.yaml not found in local-env-setup directory");
   }
-
-  console.log("Terraform version.");
-  execVerbose("terraform version", SETUP_DIR);
 
   console.log("Docker version.");
   execVerbose("docker version", SETUP_DIR);
@@ -120,31 +89,6 @@ async function main() {
   console.log("Starting Docker containers...");
   execVerbose("docker compose up -d", SETUP_DIR);
 
-  // Wait for Keycloak
-  await waitForKeycloak();
-
-  // Apply Terraform configuration
-  console.log("Applying Terraform configuration...");
-  execVerbose("terraform init -upgrade", SETUP_DIR);
-  execVerbose("terraform apply -auto-approve", SETUP_DIR);
-
-  // Get Terraform outputs
-  console.log("Extracting configuration values...");
-  const keycloakClientSecret = exec(
-    "terraform output -raw keycloak_client_secret",
-    SETUP_DIR,
-  );
-  const keycloakIssuer = exec(
-    "terraform output -raw keycloak_issuer",
-    SETUP_DIR,
-  );
-  const keycloakClientId = exec(
-    "terraform output -raw keycloak_client_id",
-    SETUP_DIR,
-  );
-  const adminUserId = exec("terraform output -raw admin_user_id", SETUP_DIR);
-  const devUserId = exec("terraform output -raw dev_user_id", SETUP_DIR);
-
   // Generate NextAuth secret
   console.log("Generating NextAuth secret...");
   const nextAuthSecret = generateNextAuthSecret();
@@ -153,20 +97,8 @@ async function main() {
   console.log(`Generating ${ENV_FILE}...`);
 
   const envContent = `# NextAuth Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=${nextAuthSecret}
-
-# Keycloak Configuration
-KEYCLOAK_ISSUER=${keycloakIssuer}
-KEYCLOAK_CLIENT_ID=${keycloakClientId}
-KEYCLOAK_CLIENT_SECRET=${keycloakClientSecret}
-
-# Client-side Keycloak config for logout and OAuth2
-NEXT_PUBLIC_KEYCLOAK_ISSUER=${keycloakIssuer}
-NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${keycloakClientId}
-
-# Backend API Configuration
-BACKEND_API_URL=http://localhost:8080
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=${nextAuthSecret}
 
 # MongoDB Configuration
 MONGODB_URI=mongodb://reportmapper:reportmapper_dev_password@localhost:27017/reportmapper?authSource=admin
@@ -178,10 +110,6 @@ MINIO_ACCESS_KEY=minio_root_user
 MINIO_SECRET_KEY=minio_root_password
 MINIO_BUCKET=report-mapper-images
 MINIO_USE_SSL=false
-
-# Bootstrap Roles Configuration
-# Pre-assign roles to users on first login based on provider and user ID
-BOOTSTRAP_ROLES='[{"provider":"keycloak","userId":"${adminUserId}","roles":["security-admin","moderator","validated-user"]},{"provider":"keycloak","userId":"${devUserId}","roles":["security-admin","moderator","validated-user"]}]'
 `;
 
   writeFileSync(ENV_FILE, envContent, "utf-8");

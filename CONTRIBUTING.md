@@ -65,7 +65,7 @@ The [local-env-setup/compose.yaml] is used to start the docker services using do
 The [local-env-setup/main.tf]
 file is used to configure the keycloak service after it starts up.
 
-The setup script [scripts/setup-local-env.ts](scripts/setup-local-env.ts) also writes environment variables to
+The setup script [scripts/setup-local-runtime-config.ts](scripts/setup-local-env.ts) also writes environment variables to
 [.env.local](.env.local) which correspond to the settings in the docker containers.
 
 ## Technology Stack

@@ -1,7 +1,7 @@
 import { type Collection, Db, type Filter, ObjectId } from "mongodb";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { getDb } from "@/lib/db";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db/db";
 import { Permission, ROLE_PERMISSIONS, Role } from "@/types/rbac";
 
 export interface RevisionDocument {
@@ -31,11 +31,13 @@ interface UserAuthContext {
  * Get user authentication context with resolved permissions
  */
 async function getUserAuthContext(): Promise<UserAuthContext> {
-  const session = await getServerSession(authOptions);
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   let roles = [Role.PUBLIC];
 
-  if (session?.user?.roles) {
-    roles = session.user.roles;
+  if (session?.user && (session.user as any).roles) {
+    roles = (session.user as any).roles;
   }
 
   const permissions = roles
@@ -103,8 +105,7 @@ export class RevisionController<S, T extends RevisionDocument & S> {
     this.collectionName = collectionName;
   }
 
-  async getCollection(): Promise<Collection<T>> {
-    const db = await getDb();
+  getCollection(): Collection<T> {
     return db.collection(this.collectionName);
   }
 

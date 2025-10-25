@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { hasPermission } from "@/lib/rbac";
 import { Permission } from "@/types/rbac";
+import { authClient } from "@/components/SessionProvider";
+import {hasPermission} from "@/lib/rbac/permissions";
 
 interface SlideOutMenuProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface SlideOutMenuProps {
 }
 
 export default function SlideOutMenu({ isOpen, onClose }: SlideOutMenuProps) {
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
 
   const userRoles = (session?.user as any)?.roles || [];
   const canReview = hasPermission(userRoles, Permission.READ_ALL_OBSERVATIONS);

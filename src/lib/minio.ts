@@ -1,5 +1,5 @@
 import { Client } from "minio";
-import { config } from "@/config/env";
+import { config } from "@/config/runtime-config";
 
 let minioClient: Client | null = null;
 let bucketEnsured = false;

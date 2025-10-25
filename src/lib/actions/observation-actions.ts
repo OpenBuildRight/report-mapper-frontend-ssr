@@ -5,7 +5,7 @@ import type {
   ObservationFields,
   ObservationRevisionDocument,
 } from "@/types/models";
-import { ObservationController } from "./observations";
+import { ObservationController } from "../db/observations";
 
 /**
  * Server Actions for ObservationController

@@ -6,7 +6,7 @@ import type {
   ImageRevisionDocument,
   ImageRevisionDocumentWithUrls,
 } from "@/types/models";
-import { ImageController } from "./images";
+import { ImageController } from "../db/images";
 
 /**
  * Server Actions for ImageController

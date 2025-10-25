@@ -1,9 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
+import { auth } from "@/lib/auth";
 import { type Permission, Role } from "@/types/rbac";
-import { extractBearerToken, verifyBearerToken } from "./bearer-auth";
+import {hasPermission} from "@/lib/rbac/permissions";
 
 export interface AuthContext {
   userId?: string;
@@ -19,23 +17,11 @@ export interface AuthContext {
 export async function getAuthContext(
   request?: Request | NextRequest,
 ): Promise<AuthContext> {
-  // First, try bearer token authentication (for API access)
-  if (request) {
-    const bearerToken = extractBearerToken(request);
-    if (bearerToken) {
-      const bearerAuth = await verifyBearerToken(bearerToken);
-      if (bearerAuth) {
-        return {
-          ...bearerAuth,
-          authMethod: "bearer",
-        };
-      }
-      // Invalid bearer token - fall through to session check
-    }
-  }
 
   // Fall back to session authentication (for browser)
-  const session = await getServerSession(authOptions);
+  const session = request ? await auth.api.getSession({
+    headers: request.headers,
+  }) : null;
 
   if (!session || !session.user) {
     return {
@@ -46,7 +32,7 @@ export async function getAuthContext(
 
   const userId = session.user.id;
   // Use roles from session (cached) instead of querying DB
-  const roles = session.user.roles || [Role.PUBLIC];
+  const roles = (session.user as any).roles || [Role.PUBLIC];
 
   return {
     userId,

@@ -1,12 +1,12 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { authClient } from "@/components/SessionProvider";
 import ObservationForm from "@/components/ObservationForm";
 
 export default function ReportObservation() {
-  const { status } = useSession();
+  const { data: session, isPending } = authClient.useSession();
 
-  if (status === "loading") {
+  if (isPending) {
     return (
       <div className="container mx-auto px-4 py-8">
         <p className="text-gray-400">Loading...</p>
@@ -14,7 +14,7 @@ export default function ReportObservation() {
     );
   }
 
-  if (status === "unauthenticated") {
+  if (!session) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-yellow-900 border border-yellow-700 rounded-lg p-6">

@@ -1,7 +1,7 @@
 import { getRevisionWithUrl } from "@/lib/actions/image-actions";
 import { getAuthContext } from "@/lib/middleware/auth";
-import { canEditEntity } from "@/lib/rbac-generic";
 import type { Observation } from "@/types/observation";
+import {canEditEntity} from "@/lib/rbac/permissions";
 
 interface ObservationCardProps {
   observationId: string;

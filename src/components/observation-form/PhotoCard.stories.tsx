@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs";
 import type { PhotoWithMetadata } from "@/types/observation";
 import PhotoCard from "./PhotoCard";
 
